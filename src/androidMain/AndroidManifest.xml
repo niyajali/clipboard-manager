@@ -10,16 +10,6 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    
-    <!-- Optional: Declare that the app uses signature features -->
-    <uses-feature
-        android:name="android.hardware.touchscreen"
-        android:required="false" />
-
-    <!-- Optional: For better performance with graphics -->
-    <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="false" />
 
     <application>
         <!--

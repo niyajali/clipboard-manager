@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalWasmDsl::class)
 
+import com.diffplug.gradle.spotless.SpotlessExtension
+import com.diffplug.gradle.spotless.SpotlessPlugin
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SonatypeHost
@@ -15,6 +17,7 @@ plugins {
     alias(libs.plugins.bcv)
     alias(libs.plugins.maven)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.spotless)
 }
 
 kotlin {
@@ -206,5 +209,36 @@ mavenPublishing {
 dokka {
     dokkaPublications.html {
         outputDirectory.set(layout.buildDirectory.dir("$rootDir/docs/kdoc"))
+    }
+}
+
+allprojects {
+    subprojects {
+        val ktlintVersion = "1.4.0"
+        apply<SpotlessPlugin>()
+        extensions.configure<SpotlessExtension> {
+            kotlin {
+                target("**/*.kt")
+                targetExclude("**/build/**/*.kt")
+                ktlint(ktlintVersion).editorConfigOverride(
+                    mapOf(
+                        "android" to "true",
+                    ),
+                )
+                licenseHeaderFile(rootProject.file("spotless/copyright.kt"))
+            }
+            format("kts") {
+                target("**/*.kts")
+                targetExclude("**/build/**/*.kts")
+                // Look for the first line that doesn't have a block comment (assumed to be the license)
+                licenseHeaderFile(rootProject.file("spotless/copyright.kts"), "(^(?![\\/ ]\\*).*$)")
+            }
+            format("xml") {
+                target("**/*.xml")
+                targetExclude("**/build/**/*.xml")
+                // Look for the first XML tag that isn't a comment (<!--) or the xml declaration (<?xml)
+                licenseHeaderFile(rootProject.file("spotless/copyright.xml"), "(<[^!?])")
+            }
+        }
     }
 }
