@@ -91,6 +91,10 @@ kotlin {
         jsMain.dependencies {
             implementation(libs.kotlinx.coroutines.core.js)
         }
+
+        androidMain.dependencies {
+            implementation("androidx.startup:startup-runtime:1.2.0")
+        }
     }
 
     targets.configureEach {
