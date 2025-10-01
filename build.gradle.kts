@@ -59,32 +59,24 @@ kotlin {
     )
 
     cocoapods {
-        // Required properties
-        // Specify the required Pod version here
-        // Otherwise, the Gradle project version is used
-        version = "1.0"
+        version = "1.0.0"
         summary = "A Kotlin Multiplatform library for monitoring system clipboard changes across all major platforms including Android, JVM Desktop, iOS, JavaScript, and WebAssembly with support for text, HTML, RTF, files, and images."
         homepage = "https://github.com/niyajali/clipboard-manager"
 
-        ios.deploymentTarget = "13.5"
+        license = "Apache-2.0"
+        authors = "Sk Niyaj Ali"
 
-        // Optional properties
-        // Configure the Pod name here instead of changing the Gradle project name
+        ios.deploymentTarget = "14.0"
+
         name = "ClipboardManager"
 
         framework {
-            // Required properties
-            // Framework name configuration. Use this property instead of deprecated 'frameworkName'
             baseName = "ClipboardManager"
-
-            // Optional properties
-            // Specify the framework linking type. It's dynamic by default.
             isStatic = true
-            // Dependency export
-            // Uncomment and specify another project module if you have one:
-            // export(project(":<your other KMP module>"))
-            transitiveExport = false // This is default.
+            transitiveExport = false
         }
+
+        source = "{ :git => 'https://github.com/niyajali/clipboard-manager.git', :tag => '${project.version}' }"
     }
 
     sourceSets {

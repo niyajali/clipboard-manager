@@ -1,14 +1,17 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'ClipboardManager'
-    spec.version                  = '1.0'
+    spec.version                  = '1.0.0'
     spec.homepage                 = 'https://github.com/niyajali/clipboard-manager'
-    spec.source                   = { :http=> ''}
+    spec.source                   = {
+        :git => 'https://github.com/niyajali/clipboard-manager.git',
+        :tag => spec.version.to_s
+    }
     spec.authors                  = 'Sk Niyaj Ali'
-    spec.license                  = 'Apache License 2.0'
+    spec.license                  = 'Apache-2.0'
     spec.summary                  = 'A Kotlin Multiplatform library for monitoring system clipboard changes across all major platforms including Android, JVM Desktop, iOS, JavaScript, and WebAssembly with support for text, HTML, RTF, files, and images.'
     spec.vendored_frameworks      = 'build/cocoapods/framework/ClipboardManager.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target    = '13.5'
+    spec.ios.deployment_target    = '14.0'
                 
                 
     if !Dir.exist?('build/cocoapods/framework/ClipboardManager.framework') || Dir.empty?('build/cocoapods/framework/ClipboardManager.framework')
@@ -27,7 +30,7 @@ Pod::Spec.new do |spec|
     }
                 
     spec.pod_target_xcconfig = {
-        'KOTLIN_PROJECT_PATH' => '',
+        'KOTLIN_PROJECT_PATH' => ':',
         'PRODUCT_MODULE_NAME' => 'ClipboardManager',
     }
                 
