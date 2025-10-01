@@ -1,7 +1,5 @@
 @file:OptIn(ExperimentalWasmDsl::class)
 
-import com.diffplug.gradle.spotless.SpotlessExtension
-import com.diffplug.gradle.spotless.SpotlessPlugin
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SonatypeHost
@@ -15,6 +13,7 @@ plugins {
     alias(libs.plugins.maven)
     alias(libs.plugins.dokka)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.kotlinCocoapods)
 }
 
 kotlin {
@@ -53,9 +52,32 @@ kotlin {
         nodejs()
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    )
+
+    cocoapods {
+        version = "1.0.0"
+        summary = "A Kotlin Multiplatform library for monitoring system clipboard changes across all major platforms including Android, JVM Desktop, iOS, JavaScript, and WebAssembly with support for text, HTML, RTF, files, and images."
+        homepage = "https://github.com/niyajali/clipboard-manager"
+
+        license = "Apache-2.0"
+        authors = "Sk Niyaj Ali"
+
+        ios.deploymentTarget = "14.0"
+
+        name = "ClipboardManager"
+
+        framework {
+            baseName = "ClipboardManager"
+            isStatic = true
+            transitiveExport = false
+        }
+
+        source = "{ :git => 'https://github.com/niyajali/clipboard-manager.git', :tag => '${project.version}' }"
+    }
 
     sourceSets {
         commonMain.dependencies {

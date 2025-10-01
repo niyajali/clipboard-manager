@@ -22,7 +22,7 @@ Add the dependency to your project:
 
 ```kotlin
 dependencies {
-    implementation("io.github.niyajali:clipboard-manager:1.0.0")
+    implementation("io.github.niyajali:clipboard-manager:1.0.1")
 }
 ```
 
