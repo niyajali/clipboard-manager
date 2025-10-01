@@ -22,48 +22,79 @@
 package com.niyajali.clipboard.manager
 
 /**
- * iOS/Native-specific implementation of [ClipboardMonitorFactory].
+ * iOS platform implementation using UIPasteboard.
+ */
+private class IOSStrategy : PlatformStrategy {
+    override val priority: Int = 100
+
+    override fun isApplicable(): Boolean = true
+
+    override fun createMonitor(config: ClipboardConfig): ClipboardMonitor {
+        return IOSClipboardMonitor(
+            listener = config.listener,
+            pollingIntervalMs = config.pollingIntervalMs / 1000.0,
+            enableDuplicateFiltering = config.enableDuplicateFiltering,
+            errorHandler = config.errorHandler,
+        )
+    }
+}
+
+/**
+ * Creates clipboard monitors for iOS.
  *
- * This factory creates clipboard monitors for iOS devices using UIPasteboard.
- * Currently supports iOS targets; other native targets are not yet implemented.
+ * Uses UIPasteboard to monitor clipboard changes on iOS devices.
+ * No initialization required.
  *
- * **Supported Platforms:**
- * - iOS (iosArm64, iosX64, iosSimulatorArm64)
- * - Other native platforms: Not yet supported
+ * **Platform Details:**
+ * - Uses UIPasteboard.general for system clipboard access
+ * - Monitors changeCount property for efficient change detection
+ * - Callbacks delivered on the main thread
  *
- * **Usage Example (iOS):**
+ * **Permissions:**
+ * iOS 14+ shows a paste notification banner on first clipboard access.
+ * No explicit permission required.
+ *
+ * Example:
  * ```kotlin
- * val listener = object : ClipboardListener {
- *     override fun onClipboardChange(content: ClipboardContent) {
- *         println("iOS Clipboard: ${content.text}")
- *     }
- * }
- *
- * val monitor = ClipboardMonitorFactory.create(listener)
+ * val monitor = ClipboardMonitor.Builder()
+ *     .setListener(listener)
+ *     .setPollingInterval(500)
+ *     .build()
  * monitor.start()
  * ```
- *
- * **iOS Permissions:**
- * iOS 14+ will show a paste notification banner when the app first accesses
- * the pasteboard. No explicit permission prompt is required.
  *
  * @see IOSClipboardMonitor
  * @since 1.0.0
  */
 public actual object ClipboardMonitorFactory {
+    internal actual val registry: PlatformRegistry = PlatformRegistry()
+
+    init {
+        registry.register(IOSStrategy())
+    }
+
     /**
-     * Creates a new clipboard monitor for the current native platform.
+     * Creates a clipboard monitor with the specified configuration.
      *
-     * **iOS:** Returns an [IOSClipboardMonitor] using UIPasteboard
-     * **Other:** Throws [UnsupportedOperationException]
-     *
-     * @param listener The listener that will receive clipboard change notifications
-     *
-     * @return A new clipboard monitor instance in a stopped state
-     *
-     * @throws UnsupportedOperationException on non-iOS native platforms
-     *
-     * @see IOSClipboardMonitor
+     * @param config The configuration for the monitor
+     * @return A new iOS clipboard monitor
      */
-    public actual fun create(listener: ClipboardListener): ClipboardMonitor = IOSClipboardMonitor(listener)
+    public actual fun create(config: ClipboardConfig): ClipboardMonitor {
+        val strategy = registry.selectStrategy()
+            ?: throw UnsupportedOperationException(
+                "No applicable clipboard strategy found for iOS/Native platform.",
+            )
+
+        return strategy.createMonitor(config)
+    }
+
+    /**
+     * Creates a clipboard monitor with default configuration.
+     *
+     * @param listener The listener to receive clipboard change notifications
+     * @return A new iOS clipboard monitor with default settings
+     */
+    public actual fun create(listener: ClipboardListener): ClipboardMonitor {
+        return create(ClipboardConfig.default(listener))
+    }
 }

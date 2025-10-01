@@ -22,70 +22,96 @@
 package com.niyajali.clipboard.manager
 
 /**
- * Factory for creating platform-specific [ClipboardMonitor] instances.
+ * Creates clipboard monitors appropriate for the current platform.
  *
- * This expect/actual object provides a unified API for creating clipboard monitors
- * across all supported platforms. The factory automatically selects the appropriate
- * implementation based on the target platform.
+ * Automatically selects and creates the optimal clipboard monitor implementation
+ * for the platform your application is running on (Android, Windows, macOS, iOS, etc.).
  *
  * **Supported Platforms:**
- * - **Android**: Requires initialization via [init] (or automatic via AndroidX Startup)
- * - **JVM**: Automatically detects Windows, macOS, or Linux and uses appropriate implementation
- * - **iOS**: Native implementation using UIPasteboard
- * - **JS/WasmJS**: Browser-based implementation using Clipboard API
+ * - Android: Requires initialization via [init] or AndroidX Startup
+ * - Windows: Native clipboard notifications
+ * - macOS/Linux: Polling-based monitoring
+ * - iOS: UIPasteboard monitoring
+ * - JavaScript: Browser Clipboard API
  *
- * **Android Initialization:**
+ * **Basic Usage:**
  * ```kotlin
- * // Option 1: Manual initialization (in Application.onCreate)
- * ClipboardMonitorFactory.init(applicationContext)
- *
- * // Option 2: Automatic initialization (recommended)
- * // Add androidx.startup dependency and ClipboardInitializer will auto-initialize
- * ```
- *
- * **Usage Example:**
- * ```kotlin
- * val listener = object : ClipboardListener {
- *     override fun onClipboardChange(content: ClipboardContent) {
- *         println("Clipboard changed: ${content.text}")
- *     }
- * }
- *
  * val monitor = ClipboardMonitorFactory.create(listener)
  * monitor.start()
- * // ... monitor is now active ...
- * monitor.stop()
+ * ```
+ *
+ * **Configured Usage (Recommended):**
+ * ```kotlin
+ * val monitor = ClipboardMonitor.Builder()
+ *     .setListener(listener)
+ *     .setDebounceDelay(100)
+ *     .build()
+ * monitor.start()
  * ```
  *
  * @see ClipboardMonitor
- * @see ClipboardListener
+ * @see ClipboardMonitorBuilder
+ * @see ClipboardConfig
  * @since 1.0.0
  */
 public expect object ClipboardMonitorFactory {
     /**
-     * Creates a new [ClipboardMonitor] instance for the current platform.
+     * Internal registry of platform implementations.
      *
-     * The returned monitor is platform-specific but conforms to the common
-     * [ClipboardMonitor] interface. The monitor is created in a stopped state;
-     * call [ClipboardMonitor.start] to begin monitoring.
+     * Used internally to manage and select platform-specific monitor implementations.
+     */
+    internal val registry: PlatformRegistry
+
+    /**
+     * Creates a clipboard monitor with the specified configuration.
      *
-     * **Platform-Specific Implementations:**
-     * - **Android**: [AndroidClipboardMonitor] - requires context initialization
-     * - **Windows**: [WindowsClipboardMonitor] - uses Win32 clipboard notifications
-     * - **macOS/Linux**: [AwtOSClipboardMonitor] - uses AWT clipboard polling
-     * - **iOS**: [IOSClipboardMonitor] - uses UIPasteboard change notifications
-     * - **JS/WasmJS**: [JSClipboardMonitor] - uses browser Clipboard API
+     * Automatically selects the appropriate implementation for the current platform
+     * and applies the provided configuration settings.
      *
-     * @param listener The listener that will receive clipboard change notifications.
-     *                 Must not be null.
+     * Platform-specific behavior:
+     * - Android: Uses ClipboardManager with event-driven monitoring
+     * - Windows: Uses Win32 clipboard notifications
+     * - macOS/Linux: Uses AWT Toolkit with polling
+     * - iOS: Uses UIPasteboard with change detection
+     * - JavaScript: Uses browser Clipboard API with polling
      *
-     * @return A new [ClipboardMonitor] instance ready to be started.
+     * Example:
+     * ```kotlin
+     * val config = ClipboardConfig(
+     *     listener = myListener,
+     *     debounceDelayMs = 100,
+     *     pollingIntervalMs = 250
+     * )
+     * val monitor = ClipboardMonitorFactory.create(config)
+     * ```
      *
-     * @throws IllegalStateException on Android if [init] was not called first
-     * @throws UnsupportedOperationException on unsupported platforms
+     * @param config The configuration settings for the monitor
+     * @return A new clipboard monitor ready to be started
+     * @throws IllegalStateException on Android if not initialized
+     * @throws UnsupportedOperationException if no suitable implementation is available
+     */
+    public fun create(config: ClipboardConfig): ClipboardMonitor
+
+    /**
+     * Creates a clipboard monitor with default configuration.
      *
-     * @see ClipboardMonitor.start
-     * @see ClipboardListener
+     * Convenience method for simple use cases. Equivalent to:
+     * ```kotlin
+     * create(ClipboardConfig.default(listener))
+     * ```
+     *
+     * For custom configuration, use [ClipboardMonitorBuilder] instead:
+     * ```kotlin
+     * ClipboardMonitor.Builder()
+     *     .setListener(listener)
+     *     .setDebounceDelay(100)
+     *     .build()
+     * ```
+     *
+     * @param listener The listener to receive clipboard change notifications
+     * @return A new clipboard monitor with default settings
+     * @throws IllegalStateException on Android if not initialized
+     * @throws UnsupportedOperationException if no suitable implementation is available
      */
     public fun create(listener: ClipboardListener): ClipboardMonitor
 }

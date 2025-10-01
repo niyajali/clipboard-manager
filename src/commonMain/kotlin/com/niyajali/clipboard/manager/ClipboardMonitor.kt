@@ -124,4 +124,6 @@ public interface ClipboardMonitor {
      * @see ClipboardContent
      */
     public fun getCurrentContent(): ClipboardContent
+
+    public companion object
 }

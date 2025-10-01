@@ -22,7 +22,7 @@ Add the dependency to your project:
 
 ```kotlin
 dependencies {
-    implementation("io.github.niyajali:clipboard-manager:1.0.0")
+    implementation("io.github.niyajali:clipboard-manager:2.0.0")
 }
 ```
 
@@ -37,11 +37,56 @@ val listener = object : ClipboardListener {
     }
 }
 
+// Simple usage (backward compatible)
 val monitor = ClipboardMonitorFactory.create(listener)
+monitor.start()
+
+// Or using new Builder API (recommended)
+val monitor = ClipboardMonitor.Builder()
+    .setListener(listener)
+    .build()
 monitor.start()
 
 // When finished
 monitor.stop()
+```
+
+### Configurable Usage
+
+```kotlin
+val monitor = ClipboardMonitor.Builder()
+    .setListener(myListener)
+    .setDebounceDelay(100)              // Android debouncing (0-1000ms)
+    .setPollingInterval(250)            // Polling for macOS/Linux/iOS/JS (50-5000ms)
+    .enableDuplicateFiltering(true)     // Filter duplicate clipboard content
+    .setErrorHandler { error ->         // Custom error handling
+        logger.error("Clipboard error", error)
+    }
+    .build()
+
+monitor.start()
+```
+
+### Preset Configurations
+
+```kotlin
+// High-frequency monitoring (clipboard history apps)
+val monitor = ClipboardMonitor.Builder()
+    .setListener(listener)
+    .useHighFrequencyPreset()  // 0ms debounce, 100ms polling
+    .build()
+
+// Low-power monitoring (mobile/battery-conscious apps)
+val monitor = ClipboardMonitor.Builder()
+    .setListener(listener)
+    .useLowPowerPreset()       // 200ms debounce, 1000ms polling
+    .build()
+
+// Balanced monitoring (default settings)
+val monitor = ClipboardMonitor.Builder()
+    .setListener(listener)
+    .useBalancedPreset()       // 50ms debounce, 200ms polling
+    .build()
 ```
 
 ### Android Initialization
@@ -132,19 +177,71 @@ Data class representing clipboard content with support for multiple formats.
 - `isNotEmpty()` - Checks if clipboard has content
 - `toString()` - Returns concise content summary
 
+### ClipboardMonitorBuilder
+
+Fluent builder for creating configured clipboard monitors.
+
+**Configuration Methods:**
+
+- `setListener(listener)` - Set clipboard change listener (required)
+- `setDebounceDelay(ms)` - Set debounce delay for Android (0-1000ms, default: 50ms)
+- `setPollingInterval(ms)` - Set polling interval for platforms that use polling (50-5000ms,
+  default: 200ms)
+- `enableDuplicateFiltering(enable)` - Enable/disable duplicate content filtering (default: true)
+- `setErrorHandler(handler)` - Set custom error handler (optional)
+
+**Preset Methods:**
+
+- `useHighFrequencyPreset()` - Optimized for responsiveness (0ms debounce, 100ms polling)
+- `useLowPowerPreset()` - Optimized for battery life (200ms debounce, 1000ms polling)
+- `useBalancedPreset()` - Balanced settings (50ms debounce, 200ms polling)
+
+**Build Methods:**
+
+- `buildConfig()` - Build configuration only (returns ClipboardConfig)
+- `build()` - Build and create monitor (returns ClipboardMonitor)
+
+### ClipboardConfig
+
+Immutable configuration data class for clipboard monitors.
+
+**Properties:**
+
+- `listener: ClipboardListener` - Clipboard change listener
+- `debounceDelayMs: Long` - Debounce delay in milliseconds (default: 50ms)
+- `pollingIntervalMs: Long` - Polling interval in milliseconds (default: 200ms)
+- `enableDuplicateFiltering: Boolean` - Enable duplicate filtering (default: true)
+- `errorHandler: ((Throwable) -> Unit)?` - Optional error handler
+
+**Factory Methods:**
+
+- `default(listener)` - Create config with default settings
+- `highFrequency(listener)` - Create high-frequency config
+- `lowPower(listener)` - Create low-power config
+
 ### ClipboardMonitorFactory
 
-Factory object for creating platform-specific clipboard monitors.
+Factory object for creating platform-specific clipboard monitors using Strategy Pattern.
 
-**Method:**
+**Methods:**
 
-- `create(listener: ClipboardListener): ClipboardMonitor` - Creates appropriate monitor for current
-  platform
+- `create(config: ClipboardConfig)` - Create monitor with configuration
+- `create(listener: ClipboardListener)` - Create monitor with default configuration (backward
+  compatible)
 
 **Android-specific:**
 
 - `init(context: Context)` - Manual initialization (optional)
 - `isInitialized()` - Check initialization status
+
+## Configuration Options
+
+| Option                     | Default | Range     | Applicable Platforms  |
+|----------------------------|---------|-----------|-----------------------|
+| `debounceDelayMs`          | 50ms    | 0-1000ms  | Android, Windows      |
+| `pollingIntervalMs`        | 200ms   | 50-5000ms | macOS, Linux, iOS, JS |
+| `enableDuplicateFiltering` | true    | boolean   | All platforms         |
+| `errorHandler`             | null    | function  | All platforms         |
 
 ## Platform Implementations
 
@@ -155,7 +252,7 @@ Uses Android ClipboardManager with OnPrimaryClipChangedListener.
 **Features:**
 
 - Event-driven monitoring (no polling)
-- Automatic debouncing (50ms default)
+- Configurable debouncing (default: 50ms)
 - Duplicate detection via content signatures
 - Main thread callbacks
 - Supports text, HTML, URIs, and image detection
@@ -165,7 +262,6 @@ Uses Android ClipboardManager with OnPrimaryClipChangedListener.
 - RTF format not supported (always null)
 
 **Permissions:**
-
 No special permissions required.
 
 ### JVM Desktop
@@ -178,6 +274,7 @@ Uses native Win32 clipboard notifications via message-only window.
 
 - Native clipboard change events
 - Minimal CPU usage
+- Configurable duplicate filtering
 - Supports text, HTML, RTF, files, and images
 - Background thread callbacks
 
@@ -193,7 +290,7 @@ Uses AWT Toolkit clipboard with periodic polling.
 
 **Features:**
 
-- Polling interval: 200ms (configurable)
+- Configurable polling interval (default: 200ms)
 - Supports text, HTML, RTF, files, and images
 - Background thread callbacks
 - Automatic resource cleanup
@@ -209,13 +306,12 @@ Uses UIPasteboard with change count polling.
 
 **Features:**
 
-- Polling interval: 500ms (configurable)
+- Configurable polling interval (default: 500ms)
 - Main thread callbacks
 - Supports text, HTML, URLs, and image detection
 - RTF support depends on pasteboard content
 
 **Permissions:**
-
 iOS 14+ shows paste notification banner on first access. No explicit permission required.
 
 ### JavaScript and WebAssembly
@@ -224,7 +320,7 @@ Uses browser Clipboard API with periodic polling.
 
 **Features:**
 
-- Polling interval: 500ms (configurable)
+- Configurable polling interval (default: 500ms)
 - Supports text content reliably
 - HTML and file support varies by browser
 
@@ -311,7 +407,10 @@ handling.
 Always call `stop()` when finished monitoring to release resources:
 
 ```kotlin
-val monitor = ClipboardMonitorFactory.create(listener)
+val monitor = ClipboardMonitor.Builder()
+    .setListener(listener)
+    .build()
+
 try {
     monitor.start()
     // ... use monitor ...
@@ -324,7 +423,9 @@ Or use Kotlin coroutines with automatic cleanup:
 
 ```kotlin
 coroutineScope {
-    ClipboardMonitorFactory.create(listener)
+    ClipboardMonitor.Builder()
+        .setListener(listener)
+        .build()
         .asFlow()
         .collect { content ->
             // Process content
@@ -349,20 +450,22 @@ coroutineScope {
 
 ## Error Handling
 
-The library handles errors gracefully and will not crash monitoring due to listener exceptions.
+The library handles errors gracefully with configurable error handling:
 
 ```kotlin
-val listener = object : ClipboardListener {
-    override fun onClipboardChange(content: ClipboardContent) {
-        try {
-            // Your code
-        } catch (e: Exception) {
-            // Exceptions are caught internally
-            // Monitoring continues
+val monitor = ClipboardMonitor.Builder()
+    .setListener(myListener)
+    .setErrorHandler { error ->
+        when (error) {
+            is SecurityException -> Log.e("Clipboard", "Permission denied")
+            is IllegalStateException -> Log.e("Clipboard", "Invalid state")
+            else -> Log.e("Clipboard", "Error: ${error.message}", error)
         }
     }
-}
+    .build()
 ```
+
+Listener exceptions are caught internally to prevent monitoring interruption.
 
 ## Performance Characteristics
 
@@ -370,7 +473,7 @@ val listener = object : ClipboardListener {
 
 - Minimal overhead (event-driven)
 - No polling
-- Debouncing prevents excessive callbacks
+- Configurable debouncing prevents excessive callbacks
 
 ### Windows
 
@@ -380,46 +483,20 @@ val listener = object : ClipboardListener {
 
 ### macOS and Linux
 
-- Polling overhead (200ms intervals)
-- Configurable interval
+- Configurable polling overhead (default: 200ms)
 - Lightweight clipboard reads
 
 ### iOS
 
-- Polling overhead (500ms intervals)
+- Configurable polling overhead (default: 500ms)
 - Efficient change count checks
 - Full clipboard read only on changes
 
 ### JavaScript and WebAssembly
 
-- Polling overhead (500ms intervals)
+- Configurable polling overhead (default: 500ms)
 - Permission prompt may delay first read
 - Limited to text content in most cases
-
-## Advanced Usage
-
-### Custom Polling Intervals
-
-Desktop and iOS implementations support custom polling intervals:
-
-```kotlin
-// Not exposed in public API by default
-// For custom intervals, modify the platform-specific monitor classes
-```
-
-### Reading Clipboard Without Monitoring
-
-```kotlin
-val monitor = ClipboardMonitorFactory.create(listener)
-val content = monitor.getCurrentContent()
-println("Current clipboard: ${content.text}")
-// No need to start monitoring
-```
-
-### Handling Duplicate Content
-
-The library automatically filters duplicate clipboard notifications on all platforms using content
-signatures.
 
 ## Example Applications
 
@@ -428,15 +505,19 @@ signatures.
 ```kotlin
 class ClipboardHistory {
     private val history = mutableListOf<ClipboardContent>()
-    private val monitor = ClipboardMonitorFactory.create(
-        object : ClipboardListener {
+    private val monitor = ClipboardMonitor.Builder()
+        .setListener(object : ClipboardListener {
             override fun onClipboardChange(content: ClipboardContent) {
                 if (content.isNotEmpty()) {
                     history.add(content)
+                    if (history.size > 100) {
+                        history.removeAt(0)
+                    }
                 }
             }
-        }
-    )
+        })
+        .useHighFrequencyPreset()  // Immediate updates
+        .build()
 
     fun start() = monitor.start()
     fun stop() = monitor.stop()
@@ -447,43 +528,110 @@ class ClipboardHistory {
 ### Clipboard Synchronization
 
 ```kotlin
-class ClipboardSync(private val remoteSync: (String) -> Unit) {
-    private val monitor = ClipboardMonitorFactory.create(
-        object : ClipboardListener {
+class ClipboardSync(private val remoteSync: suspend (String) -> Unit) {
+    private val monitor = ClipboardMonitor.Builder()
+        .setListener(object : ClipboardListener {
             override fun onClipboardChange(content: ClipboardContent) {
                 content.text?.let { text ->
-                    remoteSync(text)
+                    coroutineScope.launch {
+                        remoteSync(text)
+                    }
                 }
             }
+        })
+        .setDebounceDelay(100)  // Debounce before syncing
+        .setErrorHandler { error ->
+            logger.error("Sync failed", error)
         }
-    )
+        .build()
 
     fun start() = monitor.start()
     fun stop() = monitor.stop()
 }
 ```
 
-### Clipboard Logger
+### Mobile Battery-Efficient Monitoring
 
 ```kotlin
-ClipboardMonitorFactory.create(listener)
-    .asFlow()
-    .filter { it.text != null }
-    .map { "${it.timestamp}: ${it.text}" }
-    .collect { entry ->
-        logger.log(entry)
+// Android or iOS
+val monitor = ClipboardMonitor.Builder()
+    .setListener(myListener)
+    .useLowPowerPreset()  // Battery-conscious settings
+    .setErrorHandler { error ->
+        Timber.e(error, "Clipboard error")
     }
+    .build()
 ```
 
 ## Architecture
 
-The library follows Kotlin Multiplatform expect/actual pattern:
+The library follows modern SOLID principles with Builder + Strategy Pattern:
 
-- Common interfaces defined in `commonMain`
-- Platform-specific implementations in respective source sets
-- Factory pattern for creating appropriate monitors
-- Listener pattern for callbacks
-- Flow extensions for reactive programming
+- **Builder Pattern** - Fluent API for configuration (`ClipboardMonitorBuilder`)
+- **Strategy Pattern** - Platform-specific implementations (`PlatformStrategy`)
+- **Facade Pattern** - Simplified factory interface (`ClipboardMonitorFactory`)
+- **Registry Pattern** - Strategy management (`PlatformRegistry`)
+
+**Design Principles:**
+
+- ✅ Single Responsibility - Each class has one clear purpose
+- ✅ Open/Closed - Extensible without modifying core code
+- ✅ Liskov Substitution - All strategies are interchangeable
+- ✅ Interface Segregation - Minimal, focused interfaces
+- ✅ Dependency Inversion - Depend on abstractions
+
+Common interfaces defined in `commonMain`, platform-specific implementations in respective source
+sets.
+
+## Dependency Injection
+
+### Koin
+
+```kotlin
+single<ClipboardMonitor> {
+    ClipboardMonitor.Builder()
+        .setListener(get())
+        .setDebounceDelay(100)
+        .build()
+}
+```
+
+### Hilt
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object ClipboardModule {
+    @Provides
+    @Singleton
+    fun provideClipboardMonitor(
+        listener: ClipboardListener,
+        @ApplicationContext context: Context
+    ): ClipboardMonitor {
+        ClipboardMonitorFactory.init(context)
+        return ClipboardMonitor.Builder()
+            .setListener(listener)
+            .setDebounceDelay(100)
+            .build()
+    }
+}
+```
+
+## Migration from v1.x
+
+Version 2.0 is fully backward compatible. Existing code works without changes:
+
+```kotlin
+// v1.x API (still works)
+val monitor = ClipboardMonitorFactory.create(listener)
+
+// v2.x API (recommended)
+val monitor = ClipboardMonitor.Builder()
+    .setListener(listener)
+    .build()
+```
+
+New configuration options are available through the Builder API.
 
 ## Dependencies
 
@@ -535,7 +683,7 @@ Contributions are welcome. Please ensure:
 
 - Code follows existing style conventions
 - Platform-specific code goes in appropriate source sets
-- Public API is documented with KDoc
+- Public API is documented with professional KDoc
 - Changes maintain backward compatibility
 - Tests are added for new features
 

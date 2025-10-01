@@ -35,6 +35,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class AwtOSClipboardMonitor(
     private val listener: ClipboardListener,
     private val intervalMillis: Long = 200L,
+    private val enableDuplicateFiltering: Boolean = true,
+    private val errorHandler: ((Throwable) -> Unit)? = null,
 ) : ClipboardMonitor {
 
     private val running = AtomicBoolean(false)
@@ -86,17 +88,26 @@ internal class AwtOSClipboardMonitor(
         if (!running.get()) return
         try {
             val content = readClipboard()
-            val sig = signatureOf(content)
-            if (sig != lastSignature) {
-                lastSignature = sig
-                try {
-                    listener.onClipboardChange(content)
-                } catch (_: Throwable) {
-                    // Listener exceptions must not break the monitor.
+
+            // Check for duplicates if filtering is enabled
+            if (enableDuplicateFiltering) {
+                val sig = signatureOf(content)
+                if (sig == lastSignature) {
+                    return // Skip duplicate content
                 }
+                lastSignature = sig
             }
-        } catch (_: Throwable) {
+
+            // Notify listener
+            try {
+                listener.onClipboardChange(content)
+            } catch (e: Throwable) {
+                // Listener exceptions must not break the monitor.
+                errorHandler?.invoke(e)
+            }
+        } catch (e: Throwable) {
             // Swallow all to keep the loop resilient.
+            errorHandler?.invoke(e)
         }
     }
 
@@ -173,8 +184,8 @@ internal class AwtOSClipboardMonitor(
         add("r", c.rtf)
         sb.append("i#").append(if (c.imageAvailable) 1 else 0).append('|')
         if (c.files != null) {
-            sb.append("f#").append(c.files!!.size).append('|')
-            c.files!!.take(8).forEach { sb.append(it).append('|') }
+            sb.append("f#").append(c.files.size).append('|')
+            c.files.take(8).forEach { sb.append(it).append('|') }
         } else {
             sb.append("f#0|")
         }

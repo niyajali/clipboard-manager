@@ -22,67 +22,95 @@
 package com.niyajali.clipboard.manager
 
 /**
- * JavaScript/Browser-specific implementation of [ClipboardMonitorFactory].
+ * JavaScript/Browser platform implementation using the Clipboard API.
+ */
+private class JSStrategy : PlatformStrategy {
+    override val priority: Int = 100
+
+    override fun isApplicable(): Boolean {
+        return try {
+            js("typeof navigator !== 'undefined' && navigator.clipboard !== undefined") as Boolean
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    override fun createMonitor(config: ClipboardConfig): ClipboardMonitor {
+        return JSClipboardMonitor(
+            listener = config.listener,
+            pollingIntervalMs = config.pollingIntervalMs.toInt(),
+            enableDuplicateFiltering = config.enableDuplicateFiltering,
+            errorHandler = config.errorHandler,
+        )
+    }
+}
+
+/**
+ * Creates clipboard monitors for JavaScript/Browser environments.
  *
- * This factory creates [JSClipboardMonitor] instances that use the browser's
- * Clipboard API (`navigator.clipboard`) to monitor clipboard changes.
+ * Uses the browser's Clipboard API to monitor clipboard changes.
+ * Requires a secure context (HTTPS or localhost) and user permission.
  *
  * **Browser Requirements:**
  * - Secure context (HTTPS or localhost)
- * - Modern browser with Clipboard API support
- * - User permission for clipboard access
- *
- * **Usage Example:**
- * ```kotlin
- * val listener = object : ClipboardListener {
- *     override fun onClipboardChange(content: ClipboardContent) {
- *         console.log("Clipboard text: ${content.text}")
- *     }
- * }
- *
- * val monitor = ClipboardMonitorFactory.create(listener)
- * monitor.start()
- * ```
- *
- * **Checking Browser Support:**
- * ```kotlin
- * // Check if Clipboard API is available
- * val isSupported = js("typeof navigator.clipboard !== 'undefined'") as Boolean
- *
- * if (isSupported) {
- *     val monitor = ClipboardMonitorFactory.create(listener)
- *     monitor.start()
- * } else {
- *     console.error("Clipboard API not supported")
- * }
- * ```
+ * - Clipboard API support (Chrome 88+, Firefox 90+, Safari 13.1+)
+ * - User permission for clipboard read access
  *
  * **Limitations:**
- * - Polling-based (no native change events)
- * - Requires user permission
- * - Only supports text content reliably
- * - HTML and file support varies by browser
- * - RTF not supported
+ * - No native change events (uses polling)
+ * - RTF format not supported
+ * - File access limited by browser security
+ * - Permission prompt on first access
+ *
+ * Example:
+ * ```kotlin
+ * if (window.navigator.asDynamic().clipboard != null) {
+ *     val monitor = ClipboardMonitor.Builder()
+ *         .setListener(listener)
+ *         .setPollingInterval(500)
+ *         .build()
+ *     monitor.start()
+ * } else {
+ *     console.error("Clipboard API not available")
+ * }
+ * ```
  *
  * @see JSClipboardMonitor
- * @see <a href="https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API">MDN Clipboard API</a>
  * @since 1.0.0
  */
 public actual object ClipboardMonitorFactory {
+    internal actual val registry: PlatformRegistry = PlatformRegistry()
+
+    init {
+        registry.register(JSStrategy())
+    }
+
     /**
-     * Creates a new [JSClipboardMonitor] instance.
+     * Creates a clipboard monitor with the specified configuration.
      *
-     * The monitor uses polling to detect clipboard changes as browsers don't
-     * provide native change events for the clipboard.
-     *
-     * **Permission:** The browser will prompt the user for clipboard read
-     * permission when the monitor first accesses the clipboard.
-     *
-     * @param listener The listener that will receive clipboard change notifications
-     *
-     * @return A new [JSClipboardMonitor] instance in a stopped state
-     *
-     * @see JSClipboardMonitor
+     * @param config The configuration for the monitor
+     * @return A new JavaScript clipboard monitor
+     * @throws UnsupportedOperationException if Clipboard API is not available
      */
-    public actual fun create(listener: ClipboardListener): ClipboardMonitor = JSClipboardMonitor(listener)
+    public actual fun create(config: ClipboardConfig): ClipboardMonitor {
+        val strategy = registry.selectStrategy()
+            ?: throw UnsupportedOperationException(
+                "Clipboard API not available. " +
+                    "Ensure you're running in a secure context (HTTPS or localhost) " +
+                    "and the browser supports the Clipboard API.",
+            )
+
+        return strategy.createMonitor(config)
+    }
+
+    /**
+     * Creates a clipboard monitor with default configuration.
+     *
+     * @param listener The listener to receive clipboard change notifications
+     * @return A new Android clipboard monitor with default settings
+     * @throws IllegalStateException if the factory has not been initialized
+     */
+    public actual fun create(listener: ClipboardListener): ClipboardMonitor {
+        return create(ClipboardConfig.default(listener))
+    }
 }

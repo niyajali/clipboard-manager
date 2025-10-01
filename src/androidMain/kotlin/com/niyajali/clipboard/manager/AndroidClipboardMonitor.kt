@@ -40,10 +40,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * **Features:**
  * - Efficient event-driven monitoring (no polling)
- * - Automatic debouncing (default: 50ms) to coalesce rapid changes
- * - Duplicate detection using content signatures
+ * - Configurable debouncing to coalesce rapid changes
+ * - Optional duplicate detection using content signatures
  * - Main thread callbacks (safe for UI updates)
  * - Support for text, HTML, URIs, and image detection
+ * - Custom error handling support
  *
  * **Supported Content Types:**
  * - **Text**: Plain text content via `ClipData.Item.coerceToText()`
@@ -77,6 +78,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @param context The application context (provided by [ClipboardMonitorFactory])
  * @param listener The listener to receive clipboard change notifications
  * @param debounceMillis Debounce delay in milliseconds (default: 50ms)
+ * @param enableDuplicateFiltering Enable duplicate content filtering (default: true)
+ * @param errorHandler Optional callback for internal errors
  *
  * @see ClipboardMonitor
  * @see ClipboardMonitorFactory
@@ -86,6 +89,8 @@ internal class AndroidClipboardMonitor(
     private val context: Context,
     private val listener: ClipboardListener,
     private val debounceMillis: Long = 50L,
+    private val enableDuplicateFiltering: Boolean = true,
+    private val errorHandler: ((Throwable) -> Unit)? = null,
 ) : ClipboardMonitor {
 
     private val running = AtomicBoolean(false)
@@ -105,18 +110,27 @@ internal class AndroidClipboardMonitor(
     private val notifyRunnable = Runnable {
         if (!running.get()) return@Runnable
 
-        val content = readClipboard()
-        val signature = signatureOf(content)
+        try {
+            val content = readClipboard()
 
-        // Only notify if content has actually changed (prevent duplicates)
-        if (signature != lastSignature) {
-            lastSignature = signature
+            // Check for duplicates if filtering is enabled
+            if (enableDuplicateFiltering) {
+                val signature = signatureOf(content)
+                if (signature == lastSignature) {
+                    return@Runnable // Skip duplicate content
+                }
+                lastSignature = signature
+            }
+
+            // Notify listener
             try {
                 listener.onClipboardChange(content)
             } catch (e: Throwable) {
                 // Listener exceptions must not stop monitoring
-                // Silently catch to maintain robustness
+                errorHandler?.invoke(e)
             }
+        } catch (e: Throwable) {
+            errorHandler?.invoke(e)
         }
     }
 
@@ -136,7 +150,9 @@ internal class AndroidClipboardMonitor(
 
         // Register listener and fire initial snapshot (both on main thread)
         mainHandler.post {
-            runCatching { clipboardManager.addPrimaryClipChangedListener(callback) }
+            runCatching {
+                clipboardManager.addPrimaryClipChangedListener(callback)
+            }.onFailure { errorHandler?.invoke(it) }
             notifyRunnable.run()
         }
     }
@@ -152,7 +168,9 @@ internal class AndroidClipboardMonitor(
         if (!running.getAndSet(false)) return
 
         mainHandler.post {
-            runCatching { clipboardManager.removePrimaryClipChangedListener(callback) }
+            runCatching {
+                clipboardManager.removePrimaryClipChangedListener(callback)
+            }.onFailure { errorHandler?.invoke(it) }
         }
         mainHandler.removeCallbacksAndMessages(null)
         lastSignature = null

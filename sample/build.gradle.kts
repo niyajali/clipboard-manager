@@ -4,9 +4,9 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
 }
 
@@ -43,8 +43,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // Compose Signature Library
-            implementation(project(":clipboard-manager"))
+            // Compose Library
+            implementation(project(":"))
             
             // Compose Multiplatform core dependencies
             implementation(compose.runtime)
@@ -139,8 +139,4 @@ compose.desktop {
             }
         }
     }
-}
-
-compose.experimental {
-    web.application {}
 }

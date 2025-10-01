@@ -21,6 +21,7 @@
  */
 package com.niyajali.clipboard.manager
 
+import kotlinx.cinterop.BetaInteropApi
 import platform.Foundation.NSDate
 import platform.Foundation.NSString
 import platform.Foundation.NSTimer
@@ -43,6 +44,8 @@ import kotlin.concurrent.AtomicReference
  * - Monitors `changeCount` property for efficient change detection
  * - Supports text, HTML, URLs, and image detection
  * - RTF support depends on pasteboard content
+ * - Configurable duplicate filtering
+ * - Optional error handling
  *
  * **Permissions:**
  * - iOS 14+: Shows paste notification banner on first access
@@ -54,6 +57,8 @@ import kotlin.concurrent.AtomicReference
  *
  * @param listener The listener to receive clipboard change notifications
  * @param pollingIntervalMs Polling interval in seconds (default: 0.5 seconds)
+ * @param enableDuplicateFiltering Enable duplicate content filtering (default: true)
+ * @param errorHandler Optional callback for internal errors
  *
  * @see ClipboardMonitor
  * @since 1.0.0
@@ -61,6 +66,8 @@ import kotlin.concurrent.AtomicReference
 internal class IOSClipboardMonitor(
     private val listener: ClipboardListener,
     private val pollingIntervalMs: Double = 0.5,
+    private val enableDuplicateFiltering: Boolean = true,
+    private val errorHandler: ((Throwable) -> Unit)? = null,
 ) : ClipboardMonitor {
 
     private val running = AtomicReference(false)
@@ -100,18 +107,29 @@ internal class IOSClipboardMonitor(
     override fun getCurrentContent(): ClipboardContent = readPasteboard()
 
     private fun checkPasteboard() {
-        val currentChangeCount = pasteboard.changeCount
-        if (currentChangeCount != lastChangeCount) {
+        try {
+            val currentChangeCount = pasteboard.changeCount
+            
+            // Only proceed if change count indicates new content
+            if (enableDuplicateFiltering && currentChangeCount == lastChangeCount) {
+                return
+            }
+            
             lastChangeCount = currentChangeCount
             val content = readPasteboard()
+            
             try {
                 listener.onClipboardChange(content)
             } catch (e: Throwable) {
                 // Listener exceptions must not stop monitoring
+                errorHandler?.invoke(e)
             }
+        } catch (e: Throwable) {
+            errorHandler?.invoke(e)
         }
     }
 
+    @OptIn(BetaInteropApi::class)
     private fun readPasteboard(): ClipboardContent {
         val timestamp = NSDate().timeIntervalSince1970.toLong() * 1000
 
