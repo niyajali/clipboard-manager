@@ -23,6 +23,7 @@ captures
 /build
 /captures
 /*.iml
+/docs
 
 # files for the dex VM
 *.dex
