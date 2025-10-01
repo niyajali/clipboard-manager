@@ -195,7 +195,7 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
             else -> User32.INSTANCE.DefWindowProc(hwnd, uMsg, wParam, lParam)
         }
     }
-z
+
     private fun loop() {
         val msg = MSG()
         while (running.get()) {
