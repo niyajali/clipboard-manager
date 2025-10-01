@@ -9,12 +9,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.composeHotReload)
     alias(libs.plugins.bcv)
     alias(libs.plugins.maven)
     alias(libs.plugins.dokka)
@@ -78,7 +74,6 @@ kotlin {
 
         // Desktop JVM dependencies
         jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.jna)
             implementation(libs.jna.platform)
@@ -91,6 +86,7 @@ kotlin {
 
         androidMain.dependencies {
             implementation("androidx.startup:startup-runtime:1.2.0")
+            implementation("androidx.annotation:annotation:1.9.1")
         }
     }
 
@@ -115,7 +111,6 @@ android {
     }
 
     buildFeatures {
-        compose = true
         buildConfig = false
     }
 

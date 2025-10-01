@@ -23,6 +23,7 @@ package com.niyajali.clipboard.manager
 
 import android.content.Context
 import androidx.annotation.RestrictTo
+import com.niyajali.clipboard.manager.ClipboardMonitorFactory.init
 
 /**
  * Android platform implementation for creating clipboard monitors.

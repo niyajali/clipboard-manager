@@ -1,5 +1,36 @@
+public final class com/niyajali/clipboard/manager/ClipboardConfig {
+	public static final field Companion Lcom/niyajali/clipboard/manager/ClipboardConfig$Companion;
+	public static final field DEFAULT_DEBOUNCE_DELAY_MS J
+	public static final field DEFAULT_ENABLE_DUPLICATE_FILTERING Z
+	public static final field DEFAULT_POLLING_INTERVAL_MS J
+	public fun <init> (Lcom/niyajali/clipboard/manager/ClipboardListener;JJZLkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lcom/niyajali/clipboard/manager/ClipboardListener;JJZLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/niyajali/clipboard/manager/ClipboardListener;
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun component4 ()Z
+	public final fun component5 ()Lkotlin/jvm/functions/Function1;
+	public final fun copy (Lcom/niyajali/clipboard/manager/ClipboardListener;JJZLkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardConfig;
+	public final fun copy (Lcom/niyajali/clipboard/manager/ClipboardListener;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardConfig;
+	public static synthetic fun copy$default (Lcom/niyajali/clipboard/manager/ClipboardConfig;Lcom/niyajali/clipboard/manager/ClipboardListener;JJZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardConfig;
+	public static synthetic fun copy$default (Lcom/niyajali/clipboard/manager/ClipboardConfig;Lcom/niyajali/clipboard/manager/ClipboardListener;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDebounceDelayMs ()J
+	public final fun getEnableDuplicateFiltering ()Z
+	public final fun getErrorHandler ()Lkotlin/jvm/functions/Function1;
+	public final fun getListener ()Lcom/niyajali/clipboard/manager/ClipboardListener;
+	public final fun getPollingIntervalMs ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardConfig$Companion {
+	public final fun default (Lcom/niyajali/clipboard/manager/ClipboardListener;)Lcom/niyajali/clipboard/manager/ClipboardConfig;
+	public final fun highFrequency (Lcom/niyajali/clipboard/manager/ClipboardListener;)Lcom/niyajali/clipboard/manager/ClipboardConfig;
+	public final fun lowPower (Lcom/niyajali/clipboard/manager/ClipboardListener;)Lcom/niyajali/clipboard/manager/ClipboardConfig;
+}
+
 public final class com/niyajali/clipboard/manager/ClipboardContent {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZJ)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZJILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -28,10 +59,37 @@ public abstract interface class com/niyajali/clipboard/manager/ClipboardListener
 }
 
 public abstract interface class com/niyajali/clipboard/manager/ClipboardMonitor {
+	public static final field Companion Lcom/niyajali/clipboard/manager/ClipboardMonitor$Companion;
 	public abstract fun getCurrentContent ()Lcom/niyajali/clipboard/manager/ClipboardContent;
 	public abstract fun isRunning ()Z
 	public abstract fun start ()V
 	public abstract fun stop ()V
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardMonitor$Companion {
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardMonitorBuilder {
+	public static final field Companion Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder$Companion;
+	public fun <init> ()V
+	public final fun build ()Lcom/niyajali/clipboard/manager/ClipboardMonitor;
+	public final fun buildConfig ()Lcom/niyajali/clipboard/manager/ClipboardConfig;
+	public final fun enableDuplicateFiltering (Z)Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+	public final fun setDebounceDelay (J)Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+	public final fun setErrorHandler (Lkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+	public final fun setListener (Lcom/niyajali/clipboard/manager/ClipboardListener;)Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+	public final fun setPollingInterval (J)Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+	public final fun useBalancedPreset ()Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+	public final fun useHighFrequencyPreset ()Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+	public final fun useLowPowerPreset ()Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardMonitorBuilder$Companion {
+	public final fun create ()Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardMonitorBuilderKt {
+	public static final fun Builder (Lcom/niyajali/clipboard/manager/ClipboardMonitor$Companion;)Lcom/niyajali/clipboard/manager/ClipboardMonitorBuilder;
 }
 
 public final class com/niyajali/clipboard/manager/ClipboardMonitorExtensionsKt {
@@ -43,8 +101,8 @@ public final class com/niyajali/clipboard/manager/ClipboardMonitorExtensionsKt {
 }
 
 public final class com/niyajali/clipboard/manager/ClipboardMonitorFactory {
-	public static final field $stable I
 	public static final field INSTANCE Lcom/niyajali/clipboard/manager/ClipboardMonitorFactory;
+	public final fun create (Lcom/niyajali/clipboard/manager/ClipboardConfig;)Lcom/niyajali/clipboard/manager/ClipboardMonitor;
 	public final fun create (Lcom/niyajali/clipboard/manager/ClipboardListener;)Lcom/niyajali/clipboard/manager/ClipboardMonitor;
 }
 
@@ -58,7 +116,6 @@ public final class com/niyajali/clipboard/manager/ClipboardResult$Companion {
 }
 
 public final class com/niyajali/clipboard/manager/ClipboardResult$Empty : com/niyajali/clipboard/manager/ClipboardResult {
-	public static final field $stable I
 	public static final field INSTANCE Lcom/niyajali/clipboard/manager/ClipboardResult$Empty;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
@@ -66,7 +123,6 @@ public final class com/niyajali/clipboard/manager/ClipboardResult$Empty : com/ni
 }
 
 public final class com/niyajali/clipboard/manager/ClipboardResult$Error : com/niyajali/clipboard/manager/ClipboardResult {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -81,7 +137,6 @@ public final class com/niyajali/clipboard/manager/ClipboardResult$Error : com/ni
 }
 
 public final class com/niyajali/clipboard/manager/ClipboardResult$PermissionDenied : com/niyajali/clipboard/manager/ClipboardResult {
-	public static final field $stable I
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -95,7 +150,6 @@ public final class com/niyajali/clipboard/manager/ClipboardResult$PermissionDeni
 }
 
 public final class com/niyajali/clipboard/manager/ClipboardResult$Success : com/niyajali/clipboard/manager/ClipboardResult {
-	public static final field $stable I
 	public fun <init> (Ljava/lang/Object;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun copy (Ljava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardResult$Success;
@@ -119,5 +173,15 @@ public final class com/niyajali/clipboard/manager/ClipboardResultKt {
 	public static final fun onError (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function2;)Lcom/niyajali/clipboard/manager/ClipboardResult;
 	public static final fun onPermissionDenied (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardResult;
 	public static final fun onSuccess (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+}
+
+public abstract interface class com/niyajali/clipboard/manager/PlatformStrategy {
+	public abstract fun createMonitor (Lcom/niyajali/clipboard/manager/ClipboardConfig;)Lcom/niyajali/clipboard/manager/ClipboardMonitor;
+	public abstract fun getPriority ()I
+	public abstract fun isApplicable ()Z
+}
+
+public final class com/niyajali/clipboard/manager/PlatformStrategy$DefaultImpls {
+	public static fun getPriority (Lcom/niyajali/clipboard/manager/PlatformStrategy;)I
 }
 

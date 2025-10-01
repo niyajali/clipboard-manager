@@ -4,10 +4,10 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.androidApplication) apply true
+    alias(libs.plugins.kotlinMultiplatform) apply true
+    alias(libs.plugins.composeMultiplatform) apply true
+    alias(libs.plugins.composeCompiler) apply true
 }
 
 kotlin {
@@ -31,6 +31,15 @@ kotlin {
                 }
             }
         }
+    }
+
+    js {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "sample.js"
+            }
+        }
+        binaries.executable()
     }
 
     wasmJs {
@@ -74,7 +83,7 @@ kotlin {
             }
         }
 
-        wasmJsMain.dependencies {
+        jsMain.dependencies {
             implementation(libs.kotlinx.coroutines.core.js)
         }
     }
