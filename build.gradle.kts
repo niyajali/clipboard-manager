@@ -1,7 +1,5 @@
 @file:OptIn(ExperimentalWasmDsl::class)
 
-import com.diffplug.gradle.spotless.SpotlessExtension
-import com.diffplug.gradle.spotless.SpotlessPlugin
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SonatypeHost
@@ -15,6 +13,7 @@ plugins {
     alias(libs.plugins.maven)
     alias(libs.plugins.dokka)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.kotlinCocoapods)
 }
 
 kotlin {
@@ -53,9 +52,40 @@ kotlin {
         nodejs()
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    )
+
+    cocoapods {
+        // Required properties
+        // Specify the required Pod version here
+        // Otherwise, the Gradle project version is used
+        version = "1.0"
+        summary = "A Kotlin Multiplatform library for monitoring system clipboard changes across all major platforms including Android, JVM Desktop, iOS, JavaScript, and WebAssembly with support for text, HTML, RTF, files, and images."
+        homepage = "https://github.com/niyajali/clipboard-manager"
+
+        ios.deploymentTarget = "13.5"
+
+        // Optional properties
+        // Configure the Pod name here instead of changing the Gradle project name
+        name = "ClipboardManager"
+
+        framework {
+            // Required properties
+            // Framework name configuration. Use this property instead of deprecated 'frameworkName'
+            baseName = "ClipboardManager"
+
+            // Optional properties
+            // Specify the framework linking type. It's dynamic by default.
+            isStatic = true
+            // Dependency export
+            // Uncomment and specify another project module if you have one:
+            // export(project(":<your other KMP module>"))
+            transitiveExport = false // This is default.
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {

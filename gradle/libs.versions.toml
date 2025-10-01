@@ -67,3 +67,4 @@ bcv = { id = 'org.jetbrains.kotlinx.binary-compatibility-validator', version.ref
 maven = { id = 'com.vanniktech.maven.publish', version.ref = 'maven' }
 dokka = { id = 'org.jetbrains.dokka', version.ref = 'dokka' }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotlessVersion" }
+kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
