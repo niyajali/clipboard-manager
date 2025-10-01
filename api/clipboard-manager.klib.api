@@ -199,13 +199,3 @@ final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipb
 
 // Targets: [ios]
 final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter|com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter(){}[0]
-
-// Targets: [wasmJs]
-final class com.niyajali.clipboard.manager/StubClipboardMonitor : com.niyajali.clipboard.manager/ClipboardMonitor { // com.niyajali.clipboard.manager/StubClipboardMonitor|null[0]
-    constructor <init>() // com.niyajali.clipboard.manager/StubClipboardMonitor.<init>|<init>(){}[0]
-
-    final fun getCurrentContent(): com.niyajali.clipboard.manager/ClipboardContent // com.niyajali.clipboard.manager/StubClipboardMonitor.getCurrentContent|getCurrentContent(){}[0]
-    final fun isRunning(): kotlin/Boolean // com.niyajali.clipboard.manager/StubClipboardMonitor.isRunning|isRunning(){}[0]
-    final fun start() // com.niyajali.clipboard.manager/StubClipboardMonitor.start|start(){}[0]
-    final fun stop() // com.niyajali.clipboard.manager/StubClipboardMonitor.stop|stop(){}[0]
-}
