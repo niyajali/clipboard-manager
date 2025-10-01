@@ -1,3 +1,24 @@
+/**
+ * Copyright 2025 Sk Niyaj Ali
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.niyajali.clipboard.manager
 
 import kotlinx.coroutines.channels.awaitClose
@@ -76,13 +97,12 @@ public fun ClipboardMonitor.asFlow(): Flow<ClipboardContent> = callbackFlow {
  * @see asFlow
  * @since 1.0.0
  */
-public fun ClipboardMonitor.textFlow(includeEmpty: Boolean = false): Flow<String?> =
-    asFlow()
-        .map { it.text }
-        .let { flow ->
-            if (includeEmpty) flow else flow.map { it?.takeIf { text -> text.isNotEmpty() } }
-        }
-        .distinctUntilChanged()
+public fun ClipboardMonitor.textFlow(includeEmpty: Boolean = false): Flow<String?> = asFlow()
+    .map { it.text }
+    .let { flow ->
+        if (includeEmpty) flow else flow.map { it?.takeIf { text -> text.isNotEmpty() } }
+    }
+    .distinctUntilChanged()
 
 /**
  * Extension function to observe file changes in the clipboard.
@@ -105,12 +125,11 @@ public fun ClipboardMonitor.textFlow(includeEmpty: Boolean = false): Flow<String
  * @see asFlow
  * @since 1.0.0
  */
-public fun ClipboardMonitor.filesFlow(): Flow<List<String>> =
-    asFlow()
-        .map { it.files }
-        .distinctUntilChanged()
-        .map { it ?: emptyList() }
-        .distinctUntilChanged { old, new -> old.isEmpty() && new.isEmpty() }
+public fun ClipboardMonitor.filesFlow(): Flow<List<String>> = asFlow()
+    .map { it.files }
+    .distinctUntilChanged()
+    .map { it ?: emptyList() }
+    .distinctUntilChanged { old, new -> old.isEmpty() && new.isEmpty() }
 
 /**
  * Extension function to observe image availability in the clipboard.
@@ -135,7 +154,6 @@ public fun ClipboardMonitor.filesFlow(): Flow<List<String>> =
  * @see asFlow
  * @since 1.0.0
  */
-public fun ClipboardMonitor.imageAvailableFlow(): Flow<Boolean> =
-    asFlow()
-        .map { it.imageAvailable }
-        .distinctUntilChanged()
+public fun ClipboardMonitor.imageAvailableFlow(): Flow<Boolean> = asFlow()
+    .map { it.imageAvailable }
+    .distinctUntilChanged()

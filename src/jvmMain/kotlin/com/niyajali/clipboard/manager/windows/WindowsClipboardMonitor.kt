@@ -1,3 +1,24 @@
+/**
+ * Copyright 2025 Sk Niyaj Ali
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.niyajali.clipboard.manager.windows
 
 import com.niyajali.clipboard.manager.ClipboardContent
@@ -14,6 +35,7 @@ import com.sun.jna.platform.win32.WinDef.WPARAM
 import com.sun.jna.platform.win32.WinUser.HWND_MESSAGE
 import com.sun.jna.platform.win32.WinUser.MSG
 import com.sun.jna.platform.win32.WinUser.WNDCLASSEX
+import com.sun.jna.platform.win32.WinUser.WS_POPUP
 import com.sun.jna.platform.win32.WinUser.WindowProc
 import com.sun.jna.ptr.PointerByReference
 import java.awt.Toolkit
@@ -22,13 +44,16 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-internal class WindowsClipboardMonitor(private val listener: ClipboardListener) : ClipboardMonitor {
-    private val WM_CLIPBOARDUPDATE = 0x031D
-    private val WM_QUIT = 0x0012
-    private val WM_DESTROY = 0x0002
+private const val WM_CLIPBOARDUPDATE = 0x031D
+private const val WM_QUIT = 0x0012
+private const val WM_DESTROY = 0x0002
+private const val WS_POPUP = 0x80000000.toInt()
 
+internal class WindowsClipboardMonitor(private val listener: ClipboardListener) : ClipboardMonitor {
     // Keep a strong reference to the WindowProc to prevent GC.
-    private val wndProc: WindowProc = WindowProc { h, msg, w, l -> handleMessage(h, msg, w, l) }
+    private val wndProc: WindowProc = WindowProc { h, msg, w, l ->
+        handleMessage(h, msg, w, l)
+    }
 
     private var hwnd: HWND? = null
     private var classRegistered = false
@@ -111,7 +136,7 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
             0,
             out,
             0,
-            null
+            null,
         )
         if (len == 0) {
             return "$prefix (error $code: <failed to format message>)"
@@ -149,18 +174,17 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
         hwnd = User32.INSTANCE.CreateWindowEx(
             0, className, "Clipboard Monitor", 0,
             0, 0, 0, 0,
-            HWND_MESSAGE, null, hInstance, null
+            HWND_MESSAGE, null, hInstance, null,
         )
 
         if (hwnd == null || !User32.INSTANCE.IsWindow(hwnd)) {
             val firstErr = lastErrorMsg("CreateWindowEx (HWND_MESSAGE) failed")
 
             // -------- Attempt #2: hidden top-level WS_POPUP, no parent --------
-            val WS_POPUP = 0x80000000.toInt()
             hwnd = User32.INSTANCE.CreateWindowEx(
                 0, className, "Clipboard Monitor", WS_POPUP,
                 0, 0, 1, 1,
-                null, null, hInstance, null
+                null, null, hInstance, null,
             )
 
             if (hwnd == null || !User32.INSTANCE.IsWindow(hwnd)) {
@@ -177,23 +201,21 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
         }
     }
 
-    private fun handleMessage(hwnd: HWND, uMsg: Int, wParam: WPARAM, lParam: LPARAM): LRESULT {
-        return when (uMsg) {
-            WM_CLIPBOARDUPDATE -> {
-                try {
-                    listener.onClipboardChange(readClipboard())
-                } catch (_: Throwable) {
-                }
-                LRESULT(0)
+    private fun handleMessage(hwnd: HWND, uMsg: Int, wParam: WPARAM, lParam: LPARAM): LRESULT = when (uMsg) {
+        WM_CLIPBOARDUPDATE -> {
+            try {
+                listener.onClipboardChange(readClipboard())
+            } catch (_: Throwable) {
             }
-
-            WM_DESTROY -> {
-                User32.INSTANCE.PostQuitMessage(0)
-                LRESULT(0)
-            }
-
-            else -> User32.INSTANCE.DefWindowProc(hwnd, uMsg, wParam, lParam)
+            LRESULT(0)
         }
+
+        WM_DESTROY -> {
+            User32.INSTANCE.PostQuitMessage(0)
+            LRESULT(0)
+        }
+
+        else -> User32.INSTANCE.DefWindowProc(hwnd, uMsg, wParam, lParam)
     }
 
     private fun loop() {
@@ -207,7 +229,7 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
                 }
 
                 r == 0 -> break // WM_QUIT
-                else -> break   // error
+                else -> break // error
             }
         }
     }
@@ -257,6 +279,13 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
             files = list.map { it.absolutePath }
         }
 
-        return ClipboardContent(text, html, rtf, files, imageAvailable, System.currentTimeMillis())
+        return ClipboardContent(
+            text = text,
+            html = html,
+            rtf = rtf,
+            files = files,
+            imageAvailable = imageAvailable,
+            timestamp = System.currentTimeMillis(),
+        )
     }
 }

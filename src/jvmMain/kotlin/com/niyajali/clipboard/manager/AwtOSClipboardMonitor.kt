@@ -1,3 +1,24 @@
+/**
+ * Copyright 2025 Sk Niyaj Ali
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.niyajali.clipboard.manager
 
 import java.awt.Toolkit
@@ -11,10 +32,9 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-
 internal class AwtOSClipboardMonitor(
     private val listener: ClipboardListener,
-    private val intervalMillis: Long = 200L
+    private val intervalMillis: Long = 200L,
 ) : ClipboardMonitor {
 
     private val running = AtomicBoolean(false)
@@ -129,7 +149,7 @@ internal class AwtOSClipboardMonitor(
             rtf = rtf,
             files = files,
             imageAvailable = imageAvailable,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
         )
     }
 
@@ -144,7 +164,9 @@ internal class AwtOSClipboardMonitor(
                 sb.append(name).append('#').append(v.length).append(';')
                 // Include a small prefix to disambiguate same-length strings
                 sb.append(v.take(64)).append('|')
-            } else sb.append(name).append('#').append("0;|")
+            } else {
+                sb.append(name).append('#').append("0;|")
+            }
         }
         add("t", c.text)
         add("h", c.html)
@@ -153,7 +175,9 @@ internal class AwtOSClipboardMonitor(
         if (c.files != null) {
             sb.append("f#").append(c.files!!.size).append('|')
             c.files!!.take(8).forEach { sb.append(it).append('|') }
-        } else sb.append("f#0|")
+        } else {
+            sb.append("f#0|")
+        }
 
         // Cheap stable digest
         return sha1(sb.toString())
