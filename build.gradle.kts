@@ -162,7 +162,7 @@ apiValidation {
 }
 
 // Maven publishing configuration
-val artifactId = "cliboard-manager"
+val artifactId = "clipboard-manager"
 val mavenGroup: String by project
 val defaultVersion: String by project
 val currentVersion = System.getenv("PACKAGE_VERSION") ?: defaultVersion
