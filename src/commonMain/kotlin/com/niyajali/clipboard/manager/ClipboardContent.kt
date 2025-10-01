@@ -1,3 +1,24 @@
+/**
+ * Copyright 2025 Sk Niyaj Ali
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.niyajali.clipboard.manager
 
 /**
@@ -30,16 +51,16 @@ public data class ClipboardContent(
     val rtf: String? = null,
     val files: List<String>? = null,
     val imageAvailable: Boolean = false,
-    val timestamp: Long
+    val timestamp: Long,
 ) {
     /**
      * Checks if the clipboard contains any content.
      *
      * @return `true` if at least one content field is non-null or non-empty, `false` otherwise.
      */
-    public fun isEmpty(): Boolean =
-        text.isNullOrEmpty() && html.isNullOrEmpty() && rtf.isNullOrEmpty() &&
-                files.isNullOrEmpty() && !imageAvailable
+    public fun isEmpty(): Boolean = text.isNullOrEmpty() && html.isNullOrEmpty() &&
+        rtf.isNullOrEmpty() &&
+        files.isNullOrEmpty() && !imageAvailable
 
     /**
      * Checks if the clipboard contains content.

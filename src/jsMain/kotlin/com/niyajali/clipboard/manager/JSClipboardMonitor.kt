@@ -1,3 +1,24 @@
+/**
+ * Copyright 2025 Sk Niyaj Ali
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.niyajali.clipboard.manager
 
 import kotlinx.browser.window
@@ -51,7 +72,7 @@ import kotlin.js.Promise
 @OptIn(DelicateCoroutinesApi::class)
 internal class JSClipboardMonitor(
     private val listener: ClipboardListener,
-    private val pollingIntervalMs: Int = 500
+    private val pollingIntervalMs: Int = 500,
 ) : ClipboardMonitor {
 
     private var running = false
@@ -115,21 +136,19 @@ internal class JSClipboardMonitor(
      *
      * @return The current clipboard content, or empty if unavailable or permission denied
      */
-    override fun getCurrentContent(): ClipboardContent {
-        return try {
-            // Synchronous fallback for getCurrentContent
-            // In practice, users should prefer async Flow API for JS
-            ClipboardContent(
-                text = null,
-                html = null,
-                rtf = null,
-                files = null,
-                imageAvailable = false,
-                timestamp = js("Date.now()") as Long
-            )
-        } catch (e: Throwable) {
-            ClipboardContent(timestamp = js("Date.now()") as Long)
-        }
+    override fun getCurrentContent(): ClipboardContent = try {
+        // Synchronous fallback for getCurrentContent
+        // In practice, users should prefer async Flow API for JS
+        ClipboardContent(
+            text = null,
+            html = null,
+            rtf = null,
+            files = null,
+            imageAvailable = false,
+            timestamp = js("Date.now()") as Long,
+        )
+    } catch (e: Throwable) {
+        ClipboardContent(timestamp = js("Date.now()") as Long)
     }
 
     // ==== Internal Implementation ====
@@ -176,7 +195,7 @@ internal class JSClipboardMonitor(
                 rtf = null,
                 files = null,
                 imageAvailable = false,
-                timestamp = timestamp
+                timestamp = timestamp,
             )
         } catch (e: Throwable) {
             // Permission denied or not available

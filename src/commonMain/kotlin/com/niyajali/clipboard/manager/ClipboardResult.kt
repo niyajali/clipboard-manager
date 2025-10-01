@@ -1,3 +1,24 @@
+/**
+ * Copyright 2025 Sk Niyaj Ali
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.niyajali.clipboard.manager
 
 /**
@@ -53,7 +74,7 @@ public sealed interface ClipboardResult<out T> {
      */
     public data class Error(
         val message: String,
-        val cause: Throwable? = null
+        val cause: Throwable? = null,
     ) : ClipboardResult<Nothing>
 
     /**
@@ -66,8 +87,7 @@ public sealed interface ClipboardResult<out T> {
          * @param data The data to wrap, or null to return [Empty]
          * @return [Success] if data is non-null, [Empty] otherwise
          */
-        public fun <T : Any> ofNullable(data: T?): ClipboardResult<T> =
-            data?.let { Success(it) } ?: Empty
+        public fun <T : Any> ofNullable(data: T?): ClipboardResult<T> = data?.let { Success(it) } ?: Empty
 
         /**
          * Creates a result from a standard Kotlin [Result].
@@ -75,11 +95,10 @@ public sealed interface ClipboardResult<out T> {
          * @param result The Kotlin result to convert
          * @return [Success] if result is success, [Error] otherwise
          */
-        public fun <T> from(result: Result<T>): ClipboardResult<T> =
-            result.fold(
-                onSuccess = { Success(it) },
-                onFailure = { Error(it.message ?: "Unknown error", it) }
-            )
+        public fun <T> from(result: Result<T>): ClipboardResult<T> = result.fold(
+            onSuccess = { Success(it) },
+            onFailure = { Error(it.message ?: "Unknown error", it) },
+        )
     }
 }
 
@@ -90,7 +109,7 @@ public sealed interface ClipboardResult<out T> {
  * @return A new [ClipboardResult] with the transformed value, or the original error
  */
 public inline fun <T, R> ClipboardResult<T>.map(
-    transform: (T) -> R
+    transform: (T) -> R,
 ): ClipboardResult<R> = when (this) {
     is ClipboardResult.Success -> ClipboardResult.Success(transform(data))
     is ClipboardResult.Empty -> ClipboardResult.Empty
@@ -105,7 +124,7 @@ public inline fun <T, R> ClipboardResult<T>.map(
  * @return The result of the transform function, or the original error
  */
 public inline fun <T, R> ClipboardResult<T>.flatMap(
-    transform: (T) -> ClipboardResult<R>
+    transform: (T) -> ClipboardResult<R>,
 ): ClipboardResult<R> = when (this) {
     is ClipboardResult.Success -> transform(data)
     is ClipboardResult.Empty -> ClipboardResult.Empty
