@@ -23,6 +23,7 @@ dokka = "2.0.0"
 jetbrains-navigation = "2.8.4"
 jna = "5.18.0"
 jfa = "1.2.0"
+spotlessVersion = "6.25.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -51,6 +52,8 @@ jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 jna-jpms = { module = "net.java.dev.jna:jna-jpms", version.ref = "jna" }
 jna-platform-jpms = { module = "net.java.dev.jna:jna-platform-jpms", version.ref = "jna" }
 
+spotless-gradle = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotlessVersion" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
@@ -61,3 +64,4 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 bcv = { id = 'org.jetbrains.kotlinx.binary-compatibility-validator', version.ref = 'bcv' }
 maven = { id = 'com.vanniktech.maven.publish', version.ref = 'maven' }
 dokka = { id = 'org.jetbrains.dokka', version.ref = 'dokka' }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotlessVersion" }

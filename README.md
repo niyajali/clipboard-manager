@@ -1,327 +1,520 @@
-# Compose Signature
+# Clipboard Manager
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.niyajali/compose-signature.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.niyajali%22%20AND%20a:%22compose-signature%22)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Kotlin](https://img.shields.io/badge/kotlin-multiplatform-orange.svg?logo=kotlin)](http://kotlinlang.org)
-[![Compose](https://img.shields.io/badge/Compose-Multiplatform-blue.svg?logo=jetpackcompose)](https://www.jetbrains.com/lp/compose-mpp/)
+A Kotlin Multiplatform library for monitoring system clipboard changes across all major platforms.
 
-A powerful and highly customizable **Compose Multiplatform signature library** that enables users to draw digital
-signatures with advanced features including undo/redo functionality, grid display, fullscreen mode, and comprehensive
-state management.
+## Overview
 
-## ✨ Features
+Clipboard Manager provides a unified interface for tracking clipboard changes in real-time. The
+library automatically selects the optimal implementation based on your target platform, using native
+clipboard APIs for efficient monitoring.
 
-- 🎨 **Customizable Appearance**: Colors, stroke width, backgrounds, borders, and shapes
-- 📱 **Multiplatform Support**: Android, iOS, Desktop (JVM), Web (JS/WASM)
-- ↩️ **Undo/Redo**: Full undo/redo stack with configurable limits
-- 🔲 **Grid Display**: Optional grid overlay with customizable spacing and colors
-- 🖥️ **Fullscreen Mode**: Dedicated fullscreen signature experience
-- 🎯 **Real-time Updates**: Live signature updates instead of completion-only callbacks
-- 📊 **State Management**: Comprehensive state tracking with SOLID architecture
-- 🔧 **Multiple Overloads**: Simple to advanced usage patterns
-- 📋 **Built-in Actions**: Optional action buttons (Clear, Save, Undo, Redo)
-- 📈 **Signature Analytics**: Complexity analysis, bounds calculation, metadata generation
-- 🎨 **Export Options**: Multiple export formats and scaling options
-- ♿ **Accessibility**: High contrast modes and accessibility-friendly options
+## Supported Platforms
 
-## 🚀 Quick Start
+- Android (API 21+)
+- JVM Desktop (Windows, macOS, Linux)
+- iOS (iosArm64, iosX64, iosSimulatorArm64)
+- JavaScript (Browser)
+- WebAssembly JavaScript
 
-### Installation
+## Installation
 
-Add to your `build.gradle.kts`:
+Add the dependency to your project:
 
 ```kotlin
 dependencies {
-    implementation("io.github.niyajali:compose-signature:2.0.0")
+    implementation("io.github.niyajali:clipboard-manager:1.0.0")
 }
 ```
+
+## Quick Start
 
 ### Basic Usage
 
 ```kotlin
-@Composable
-fun SimpleSignature() {
-    var signature by remember { mutableStateOf<ImageBitmap?>(null) }
+val listener = object : ClipboardListener {
+    override fun onClipboardChange(content: ClipboardContent) {
+        println("Clipboard changed: ${content.text}")
+    }
+}
 
-    ComposeSign(
-        onSignatureUpdate = { signature = it },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-    )
+val monitor = ClipboardMonitorFactory.create(listener)
+monitor.start()
+
+// When finished
+monitor.stop()
+```
+
+### Android Initialization
+
+The library initializes automatically via AndroidX Startup. No manual setup required.
+
+For manual initialization (if AndroidX Startup is disabled):
+
+```kotlin
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        ClipboardMonitorFactory.init(this)
+    }
 }
 ```
 
-### Advanced Usage
+### Kotlin Flow Integration
 
 ```kotlin
-@Composable
-fun AdvancedSignature() {
-    val signatureState = rememberSignatureState()
-    var signature by remember { mutableStateOf<ImageBitmap?>(null) }
+// Monitor all clipboard changes
+ClipboardMonitorFactory.create(listener)
+    .asFlow()
+    .collect { content ->
+        println("Content: ${content.text}")
+    }
 
-    ComposeSign(
-        onSignatureUpdate = { signature = it },
-        config = SignatureConfig(
-            strokeColor = Color.Blue,
-            strokeWidth = 4.dp,
-            backgroundColor = Color.White,
-            showGrid = true,
-            gridColor = Color.Gray.copy(alpha = 0.3f),
-            showActions = true,
-            borderStroke = BorderStroke(2.dp, Color.Gray),
-            cornerShape = RoundedCornerShape(12.dp)
-        ),
-        state = signatureState,
-        onActionClicked = { action ->
-            when (action) {
-                SignatureAction.CLEAR -> signatureState.clear()
-                SignatureAction.UNDO -> signatureState.undo()
-                SignatureAction.REDO -> signatureState.redo()
-                SignatureAction.SAVE -> {
-                    // Handle save logic
-                    signature?.let { /* Save to file */ }
+// Monitor only text changes
+ClipboardMonitorFactory.create(listener)
+    .textFlow()
+    .collect { text ->
+        println("Text: $text")
+    }
+
+// Monitor file changes
+ClipboardMonitorFactory.create(listener)
+    .filesFlow()
+    .collect { files ->
+        println("Files: ${files.joinToString()}")
+    }
+
+// Monitor image availability
+ClipboardMonitorFactory.create(listener)
+    .imageAvailableFlow()
+    .collect { hasImage ->
+        println("Image available: $hasImage")
+    }
+```
+
+## Core Components
+
+### ClipboardMonitor
+
+Main interface for monitoring clipboard changes. Provides lifecycle methods for starting and
+stopping monitoring.
+
+**Methods:**
+
+- `start()` - Begins monitoring clipboard changes
+- `stop()` - Stops monitoring and releases resources
+- `isRunning()` - Returns monitoring status
+- `getCurrentContent()` - Retrieves current clipboard content synchronously
+
+### ClipboardListener
+
+Callback interface for receiving clipboard change notifications.
+
+**Method:**
+
+- `onClipboardChange(content: ClipboardContent)` - Called when clipboard content changes
+
+### ClipboardContent
+
+Data class representing clipboard content with support for multiple formats.
+
+**Properties:**
+
+- `text: String?` - Plain text content
+- `html: String?` - HTML formatted content
+- `rtf: String?` - Rich Text Format content
+- `files: List<String>?` - List of file paths or URIs
+- `imageAvailable: Boolean` - Indicates if image is present
+- `timestamp: Long` - Unix timestamp in milliseconds
+
+**Helper Methods:**
+
+- `isEmpty()` - Checks if clipboard is empty
+- `isNotEmpty()` - Checks if clipboard has content
+- `toString()` - Returns concise content summary
+
+### ClipboardMonitorFactory
+
+Factory object for creating platform-specific clipboard monitors.
+
+**Method:**
+
+- `create(listener: ClipboardListener): ClipboardMonitor` - Creates appropriate monitor for current
+  platform
+
+**Android-specific:**
+
+- `init(context: Context)` - Manual initialization (optional)
+- `isInitialized()` - Check initialization status
+
+## Platform Implementations
+
+### Android
+
+Uses Android ClipboardManager with OnPrimaryClipChangedListener.
+
+**Features:**
+
+- Event-driven monitoring (no polling)
+- Automatic debouncing (50ms default)
+- Duplicate detection via content signatures
+- Main thread callbacks
+- Supports text, HTML, URIs, and image detection
+
+**Limitations:**
+
+- RTF format not supported (always null)
+
+**Permissions:**
+
+No special permissions required.
+
+### JVM Desktop
+
+#### Windows
+
+Uses native Win32 clipboard notifications via message-only window.
+
+**Features:**
+
+- Native clipboard change events
+- Minimal CPU usage
+- Supports text, HTML, RTF, files, and images
+- Background thread callbacks
+
+**Implementation:**
+
+- `AddClipboardFormatListener` Win32 API
+- JNA (Java Native Access) for native interop
+- Message-only window for event handling
+
+#### macOS and Linux
+
+Uses AWT Toolkit clipboard with periodic polling.
+
+**Features:**
+
+- Polling interval: 200ms (configurable)
+- Supports text, HTML, RTF, files, and images
+- Background thread callbacks
+- Automatic resource cleanup
+
+**Implementation:**
+
+- `Toolkit.getDefaultToolkit().systemClipboard`
+- `ScheduledExecutorService` for polling
+
+### iOS
+
+Uses UIPasteboard with change count polling.
+
+**Features:**
+
+- Polling interval: 500ms (configurable)
+- Main thread callbacks
+- Supports text, HTML, URLs, and image detection
+- RTF support depends on pasteboard content
+
+**Permissions:**
+
+iOS 14+ shows paste notification banner on first access. No explicit permission required.
+
+### JavaScript and WebAssembly
+
+Uses browser Clipboard API with periodic polling.
+
+**Features:**
+
+- Polling interval: 500ms (configurable)
+- Supports text content reliably
+- HTML and file support varies by browser
+
+**Requirements:**
+
+- Secure context (HTTPS or localhost)
+- Modern browser with Clipboard API support
+- User permission for clipboard access
+
+**Limitations:**
+
+- No native change events
+- RTF format not supported
+- Limited file access due to browser security
+- Permission prompt on first access
+
+**Browser Compatibility:**
+
+- Chrome/Edge 88+: Full support
+- Firefox 90+: Full support
+- Safari: Partial support (requires user interaction)
+
+## Extension Functions
+
+### Flow Extensions
+
+```kotlin
+// All clipboard changes as Flow
+fun ClipboardMonitor.asFlow(): Flow<ClipboardContent>
+
+// Only text changes
+fun ClipboardMonitor.textFlow(includeEmpty: Boolean = false): Flow<String?>
+
+// Only file changes
+fun ClipboardMonitor.filesFlow(): Flow<List<String>>
+
+// Image availability changes
+fun ClipboardMonitor.imageAvailableFlow(): Flow<Boolean>
+```
+
+### Result Extensions
+
+```kotlin
+// Transform successful results
+fun <T, R> ClipboardResult<T>.map(transform: (T) -> R): ClipboardResult<R>
+
+// Chain result operations
+fun <T, R> ClipboardResult<T>.flatMap(transform: (T) -> ClipboardResult<R>): ClipboardResult<R>
+
+// Extract values
+fun <T> ClipboardResult<T>.getOrNull(): T?
+fun <T> ClipboardResult<T>.getOrDefault(default: T): T
+fun <T> ClipboardResult<T>.getOrThrow(): T
+
+// Callbacks for different result types
+fun <T> ClipboardResult<T>.onSuccess(block: (T) -> Unit): ClipboardResult<T>
+fun <T> ClipboardResult<T>.onEmpty(block: () -> Unit): ClipboardResult<T>
+fun <T> ClipboardResult<T>.onPermissionDenied(block: (String?) -> Unit): ClipboardResult<T>
+fun <T> ClipboardResult<T>.onError(block: (String, Throwable?) -> Unit): ClipboardResult<T>
+
+// Status checks
+fun <T> ClipboardResult<T>.isSuccess(): Boolean
+fun <T> ClipboardResult<T>.isFailure(): Boolean
+fun <T> ClipboardResult<T>.isEmpty(): Boolean
+```
+
+## Thread Safety
+
+All monitor implementations are thread-safe and can be called from any thread.
+
+**Callback Threading:**
+
+- **Android**: Main thread (UI thread)
+- **Windows**: Dedicated message loop thread
+- **macOS/Linux**: Scheduled executor thread
+- **iOS**: Main thread
+- **JS/WasmJS**: Event loop (main thread)
+
+UI updates are safe from callbacks on Android and iOS. Other platforms require proper thread
+handling.
+
+## Resource Management
+
+Always call `stop()` when finished monitoring to release resources:
+
+```kotlin
+val monitor = ClipboardMonitorFactory.create(listener)
+try {
+    monitor.start()
+    // ... use monitor ...
+} finally {
+    monitor.stop()
+}
+```
+
+Or use Kotlin coroutines with automatic cleanup:
+
+```kotlin
+coroutineScope {
+    ClipboardMonitorFactory.create(listener)
+        .asFlow()
+        .collect { content ->
+            // Process content
+        }
+    // Automatically cleaned up when scope exits
+}
+```
+
+## Content Type Support
+
+| Content Type | Android | Windows | macOS | Linux | iOS  | JS/WasmJS |
+|--------------|---------|---------|-------|-------|------|-----------|
+| Plain Text   | Yes     | Yes     | Yes   | Yes   | Yes  | Yes       |
+| HTML         | Yes     | Yes     | Yes   | Yes   | Yes  | Limited   |
+| RTF          | No      | Yes     | Yes   | Yes   | Yes  | No        |
+| Files        | Yes¹    | Yes     | Yes   | Yes   | Yes² | Limited   |
+| Images       | Yes³    | Yes³    | Yes³  | Yes³  | Yes³ | Limited   |
+
+¹ Android provides content URIs (`content://...`)  
+² iOS provides file paths via URLs  
+³ Detection only; actual image data requires platform-specific APIs
+
+## Error Handling
+
+The library handles errors gracefully and will not crash monitoring due to listener exceptions.
+
+```kotlin
+val listener = object : ClipboardListener {
+    override fun onClipboardChange(content: ClipboardContent) {
+        try {
+            // Your code
+        } catch (e: Exception) {
+            // Exceptions are caught internally
+            // Monitoring continues
+        }
+    }
+}
+```
+
+## Performance Characteristics
+
+### Android
+
+- Minimal overhead (event-driven)
+- No polling
+- Debouncing prevents excessive callbacks
+
+### Windows
+
+- Minimal CPU usage (event-driven)
+- Native OS notifications
+- No polling
+
+### macOS and Linux
+
+- Polling overhead (200ms intervals)
+- Configurable interval
+- Lightweight clipboard reads
+
+### iOS
+
+- Polling overhead (500ms intervals)
+- Efficient change count checks
+- Full clipboard read only on changes
+
+### JavaScript and WebAssembly
+
+- Polling overhead (500ms intervals)
+- Permission prompt may delay first read
+- Limited to text content in most cases
+
+## Advanced Usage
+
+### Custom Polling Intervals
+
+Desktop and iOS implementations support custom polling intervals:
+
+```kotlin
+// Not exposed in public API by default
+// For custom intervals, modify the platform-specific monitor classes
+```
+
+### Reading Clipboard Without Monitoring
+
+```kotlin
+val monitor = ClipboardMonitorFactory.create(listener)
+val content = monitor.getCurrentContent()
+println("Current clipboard: ${content.text}")
+// No need to start monitoring
+```
+
+### Handling Duplicate Content
+
+The library automatically filters duplicate clipboard notifications on all platforms using content
+signatures.
+
+## Example Applications
+
+### Clipboard History Manager
+
+```kotlin
+class ClipboardHistory {
+    private val history = mutableListOf<ClipboardContent>()
+    private val monitor = ClipboardMonitorFactory.create(
+        object : ClipboardListener {
+            override fun onClipboardChange(content: ClipboardContent) {
+                if (content.isNotEmpty()) {
+                    history.add(content)
                 }
             }
         }
     )
+
+    fun start() = monitor.start()
+    fun stop() = monitor.stop()
+    fun getHistory(): List<ClipboardContent> = history.toList()
 }
 ```
 
-## 📚 Documentation
-
-### Core Components
-
-#### ComposeSign
-
-The main composable with multiple overloads for different use cases:
+### Clipboard Synchronization
 
 ```kotlin
-// Simple usage
-ComposeSign(onSignatureUpdate = { signature = it })
-
-// Basic customization
-ComposeSign(
-    onSignatureUpdate = { signature = it },
-    strokeColor = Color.Blue,
-    strokeWidth = 4.dp,
-    showGrid = true
-)
-
-// Full configuration
-ComposeSign(
-    onSignatureUpdate = { signature = it },
-    config = SignatureConfig(/* ... */),
-    state = rememberSignatureState(),
-    onActionClicked = { action -> /* handle action */ }
-)
-```
-
-#### SignatureConfig
-
-Comprehensive configuration object:
-
-```kotlin
-data class SignatureConfig(
-    val strokeColor: Color = Color.Black,
-    val strokeWidth: Dp = 3.dp,
-    val backgroundColor: Color = Color.White,
-    val borderStroke: BorderStroke? = BorderStroke(1.dp, Color.Gray),
-    val cornerShape: CornerBasedShape = RoundedCornerShape(8.dp),
-    val showGrid: Boolean = false,
-    val gridColor: Color = Color.Gray.copy(alpha = 0.3f),
-    val gridSpacing: Dp = 20.dp,
-    val isFullScreen: Boolean = false,
-    val minHeight: Dp = 200.dp,
-    val maxHeight: Dp = 400.dp,
-    val showActions: Boolean = false,
-    val enableSmoothDrawing: Boolean = true
-)
-```
-
-#### SignatureState
-
-Enhanced state management with undo/redo:
-
-```kotlin
-val state = rememberSignatureState()
-
-// State properties
-state.paths // List of signature paths
-state.inputState // Current input state (IDLE, DRAWING, COMPLETED)
-state.signature // Generated ImageBitmap
-state.canUndo // Whether undo is available
-state.canRedo // Whether redo is available
-
-// State operations
-state.addPath(path)
-state.clear()
-state.undo()
-state.redo()
-
-// Extension functions
-state.isEmpty()
-state.getSignatureBounds()
-state.getMetadata()
-state.exportSignature(width, height)
-state.isValid()
-```
-
-### Predefined Configurations
-
-```kotlin
-// Default minimal configuration
-SignatureConfig.Default
-
-// Fullscreen with actions
-SignatureConfig.Fullscreen
-
-// With grid enabled
-SignatureConfig.WithGrid
-
-// Thick strokes
-SignatureConfig.ThickStroke
-
-// Professional documents
-SignatureConfig.Professional
-
-// Creative/artistic
-SignatureConfig.Creative
-```
-
-### Fullscreen Mode
-
-```kotlin
-@Composable
-fun FullscreenExample() {
-    var showFullscreen by remember { mutableStateOf(false) }
-    var signature by remember { mutableStateOf<ImageBitmap?>(null) }
-
-    if (showFullscreen) {
-        ComposeSignFullscreen(
-            onSignatureUpdate = { signature = it },
-            onDismiss = { showFullscreen = false },
-            config = SignatureConfig.Fullscreen
-        )
-    }
-}
-```
-
-## 🎨 Customization Examples
-
-### Dark Theme
-
-```kotlin
-ComposeSign(
-    config = SignatureConfig.Default.asDarkTheme()
-)
-```
-
-### High Contrast (Accessibility)
-
-```kotlin
-ComposeSign(
-    config = SignatureConfig.Default.asAccessible(highContrast = true)
-)
-```
-
-### Form Integration
-
-```kotlin
-ComposeSign(
-    config = SignatureConfig.FormIntegration
-)
-```
-
-### Multi-Color Signature
-
-```kotlin
-@Composable
-fun MultiColorSignature() {
-    var currentColor by remember { mutableStateOf(Color.Black) }
-
-    ComposeSign(
-        onSignatureUpdate = { signature = it },
-        strokeColor = currentColor,
-        strokeWidth = 4.dp,
-        showGrid = true
+class ClipboardSync(private val remoteSync: (String) -> Unit) {
+    private val monitor = ClipboardMonitorFactory.create(
+        object : ClipboardListener {
+            override fun onClipboardChange(content: ClipboardContent) {
+                content.text?.let { text ->
+                    remoteSync(text)
+                }
+            }
+        }
     )
 
-    // Color picker UI
-    ColorPicker(
-        selectedColor = currentColor,
-        onColorSelected = { currentColor = it }
-    )
+    fun start() = monitor.start()
+    fun stop() = monitor.stop()
 }
 ```
 
-## 📈 Analytics & Metadata
+### Clipboard Logger
 
 ```kotlin
-val state = rememberSignatureState()
-
-// Get signature metadata
-val metadata = state.getMetadata()
-println("Paths: ${metadata.pathCount}")
-println("Complexity: ${metadata.complexityDescription()}")
-println("Total length: ${metadata.totalLength}")
-
-// Get bounds information
-val bounds = state.getSignatureBounds()
-bounds?.let {
-    println("Size: ${it.width} x ${it.height}")
-    println("Area: ${it.area()}")
-}
-
-// Validation
-val isValid = state.isValid(
-    minPaths = 5,
-    minLength = 100f,
-    minComplexity = 20
-)
-```
-
-## 🏗️ Architecture
-
-ComposeSign follows SOLID principles:
-
-- **Single Responsibility**: Each class has a single, well-defined purpose
-- **Open/Closed**: Extensible through configuration without modification
-- **Liskov Substitution**: Implementations can be substituted seamlessly
-- **Interface Segregation**: Clean interfaces for different responsibilities
-- **Dependency Inversion**: High-level modules don't depend on low-level details
-
-## 🧪 Testing
-
-```kotlin
-class SignatureStateTest {
-    @Test
-    fun `should handle undo redo correctly`() {
-        val state = SignatureState()
-        state.addPath(createTestPath())
-        state.undo()
-        assertTrue(state.isEmpty())
-        assertTrue(state.canRedo)
-        state.redo()
-        assertFalse(state.isEmpty())
+ClipboardMonitorFactory.create(listener)
+    .asFlow()
+    .filter { it.text != null }
+    .map { "${it.timestamp}: ${it.text}" }
+    .collect { entry ->
+        logger.log(entry)
     }
-}
 ```
 
-## 🤝 Contributing
+## Architecture
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+The library follows Kotlin Multiplatform expect/actual pattern:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+- Common interfaces defined in `commonMain`
+- Platform-specific implementations in respective source sets
+- Factory pattern for creating appropriate monitors
+- Listener pattern for callbacks
+- Flow extensions for reactive programming
 
-## 📄 License
+## Dependencies
+
+### Common
+
+- Kotlin Stdlib
+- Kotlinx Coroutines Core
+- Kotlinx DateTime
+
+### Android
+
+- AndroidX Startup Runtime
+
+### JVM
+
+- JNA (Java Native Access)
+- JNA Platform
+
+### iOS
+
+- Foundation Framework
+- UIKit Framework
+
+### JavaScript
+
+- Browser Clipboard API
+
+## License
 
 ```
-Copyright 2024 Niyaj Ali
+Copyright 2025 Sk Niyaj Ali
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -336,18 +529,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-## 🔗 Links
+## Contributing
 
-- [Documentation](https://github.com/niyajali/compose-signature/wiki)
-- [API Reference](https://niyajali.github.io/compose-signature/)
-- [Examples](https://github.com/niyajali/compose-signature/tree/main/examples)
+Contributions are welcome. Please ensure:
 
-## 🙏 Acknowledgments
+- Code follows existing style conventions
+- Platform-specific code goes in appropriate source sets
+- Public API is documented with KDoc
+- Changes maintain backward compatibility
+- Tests are added for new features
 
-- Thanks to the Compose Multiplatform team for the amazing framework
-- Inspired by the need for better signature solutions in multiplatform apps
-- Built with ❤️ for the Kotlin Multiplatform community
+## Links
 
----
+- Repository: https://github.com/niyajali/clipboard-manager
+- Issues: https://github.com/niyajali/clipboard-manager/issues
 
-**ComposeSign** - Making digital signatures simple, powerful, and beautiful across all platforms.
+## Author
+
+Sk Niyaj Ali - https://github.com/niyajali

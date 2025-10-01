@@ -8,14 +8,31 @@
 
     See https://github.com/mobilebytesensei/financiera-bienestar/blob/dev/LICENSE
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Optional: Declare that the app uses signature features -->
-    <uses-feature
-            android:name="android.hardware.touchscreen"
-            android:required="false"/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Optional: For better performance with graphics -->
-    <uses-feature
-            android:glEsVersion="0x00020000"
-            android:required="false"/>
+    <application>
+        <!--
+            AndroidX Startup automatic initialization for ClipboardMonitorFactory.
+            
+            This provider automatically initializes the clipboard manager when your app starts,
+            eliminating the need for manual initialization.
+            
+            To disable automatic initialization, add this to your app's AndroidManifest.xml:
+            
+            <provider
+                android:name="androidx.startup.InitializationProvider"
+                android:authorities="${applicationId}.androidx-startup"
+                tools:node="remove" />
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="com.niyajali.clipboard.manager.ClipboardInitializer"
+                android:value="androidx.startup" />
+        </provider>
+    </application>
 </manifest>
