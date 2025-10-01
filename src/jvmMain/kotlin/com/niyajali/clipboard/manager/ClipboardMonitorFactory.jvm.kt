@@ -25,84 +25,116 @@ import com.niyajali.clipboard.manager.windows.WindowsClipboardMonitor
 import com.sun.jna.Platform
 
 /**
- * JVM-specific implementation of [ClipboardMonitorFactory].
+ * Windows platform implementation using native Win32 clipboard notifications.
+ */
+private class WindowsStrategy : PlatformStrategy {
+    override val priority: Int = 100
+
+    override fun isApplicable(): Boolean = Platform.isWindows()
+
+    override fun createMonitor(config: ClipboardConfig): ClipboardMonitor {
+        return WindowsClipboardMonitor(
+            listener = config.listener,
+            enableDuplicateFiltering = config.enableDuplicateFiltering,
+            errorHandler = config.errorHandler,
+        )
+    }
+}
+
+/**
+ * Generic AWT implementation for macOS and Linux using polling.
+ */
+private class AwtStrategy : PlatformStrategy {
+    override val priority: Int = 50
+
+    override fun isApplicable(): Boolean {
+        return try {
+            java.awt.Toolkit.getDefaultToolkit() != null
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    override fun createMonitor(config: ClipboardConfig): ClipboardMonitor {
+        return AwtOSClipboardMonitor(
+            listener = config.listener,
+            intervalMillis = config.pollingIntervalMs,
+            enableDuplicateFiltering = config.enableDuplicateFiltering,
+            errorHandler = config.errorHandler,
+        )
+    }
+}
+
+/**
+ * Creates clipboard monitors for JVM desktop platforms.
  *
- * This factory automatically detects the operating system and creates the
- * appropriate clipboard monitor implementation:
- * - **Windows**: Native Win32 clipboard notifications via message-only window
- * - **macOS/Linux**: AWT-based clipboard polling
+ * Automatically selects the appropriate implementation based on the operating system:
+ * - **Windows**: Native Win32 clipboard notifications (event-driven, no polling)
+ * - **macOS/Linux**: AWT Toolkit clipboard with polling
  *
- * All implementations support the full [ClipboardMonitor] interface with
+ * All implementations support the full range of clipboard content types with
  * platform-specific optimizations.
  *
- * **Platform Detection:**
- * The factory uses JNA's `Platform` class to detect the OS and select the
- * best implementation automatically.
- *
- * **Usage Example:**
+ * Example:
  * ```kotlin
- * val listener = object : ClipboardListener {
- *     override fun onClipboardChange(content: ClipboardContent) {
- *         println("Clipboard changed: ${content.text}")
- *     }
- * }
- *
- * val monitor = ClipboardMonitorFactory.create(listener)
+ * val monitor = ClipboardMonitor.Builder()
+ *     .setListener(listener)
+ *     .setPollingInterval(250) // Used on macOS/Linux
+ *     .build()
  * monitor.start()
- *
- * // Monitor runs in background...
- *
- * monitor.stop() // Clean up when done
  * ```
  *
  * **Windows Implementation:**
- * - Uses `AddClipboardFormatListener` for native change notifications
- * - Minimal CPU usage (event-driven, no polling)
+ * - Native clipboard change notifications
+ * - Minimal CPU usage (event-driven)
  * - Supports text, HTML, RTF, files, and images
  *
  * **macOS/Linux Implementation:**
- * - Uses AWT Toolkit clipboard with periodic polling (200ms default)
+ * - Configurable polling (default: 200ms)
  * - Supports text, HTML, RTF, files, and images
- * - Configurable polling interval
- *
- * **Thread Safety:**
- * All monitor implementations are thread-safe. Callbacks may be invoked on
- * platform-specific background threads.
- *
- * **Resource Management:**
- * Always call [ClipboardMonitor.stop] when done monitoring to release resources:
- * - Windows: Destroys message window and unregisters clipboard listener
- * - macOS/Linux: Shuts down scheduled executor thread
+ * - Background thread callbacks
  *
  * @see WindowsClipboardMonitor
  * @see AwtOSClipboardMonitor
  * @since 1.0.0
  */
 public actual object ClipboardMonitorFactory {
+    internal actual val registry: PlatformRegistry = PlatformRegistry()
+
+    init {
+        registry.register(WindowsStrategy())
+        registry.register(AwtStrategy())
+    }
+
     /**
-     * Creates a new platform-specific [ClipboardMonitor] for the current OS.
+     * Creates a clipboard monitor with the specified configuration.
      *
-     * The factory automatically detects Windows, macOS, or Linux and returns
-     * the appropriate implementation.
+     * Automatically detects the operating system and creates the appropriate
+     * implementation.
      *
-     * **Implementation Selection:**
-     * - `Platform.isWindows()` → [WindowsClipboardMonitor]
-     * - `Platform.isMac() || Platform.isLinux()` → [AwtOSClipboardMonitor]
-     * - Other → throws [IllegalStateException]
-     *
-     * @param listener The listener that will receive clipboard change notifications.
-     *                 Callbacks may be invoked on background threads.
-     *
-     * @return A new platform-specific [ClipboardMonitor] in a stopped state.
-     *
-     * @throws IllegalStateException if the current OS is not supported
-     *
-     * @see WindowsClipboardMonitor
-     * @see AwtOSClipboardMonitor
+     * @param config The configuration for the monitor
+     * @return A new JVM clipboard monitor
+     * @throws UnsupportedOperationException if the OS is not supported or AWT is unavailable
      */
-    public actual fun create(listener: ClipboardListener): ClipboardMonitor = when {
-        Platform.isWindows() -> WindowsClipboardMonitor(listener)
-        Platform.isMac() || Platform.isLinux() -> AwtOSClipboardMonitor(listener)
-        else -> error("Unsupported OS type: ${Platform.getOSType()}")
+    public actual fun create(config: ClipboardConfig): ClipboardMonitor {
+        val strategy = registry.selectStrategy()
+            ?: throw UnsupportedOperationException(
+                "No applicable clipboard strategy found for JVM platform. " +
+                    "OS: ${Platform.getOSType()}, " +
+                    "Supported: Windows, macOS, Linux with AWT",
+            )
+
+        return strategy.createMonitor(config)
+    }
+
+    /**
+     * Creates a clipboard monitor with default configuration.
+     *
+     * @param listener The listener to receive clipboard change notifications
+     * @return A new JVM clipboard monitor with default settings
+     * @throws UnsupportedOperationException if the OS is not supported or AWT is unavailable
+     */
+    public actual fun create(listener: ClipboardListener): ClipboardMonitor {
+        return create(ClipboardConfig.default(listener))
     }
 }

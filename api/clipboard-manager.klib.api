@@ -16,6 +16,16 @@ abstract interface com.niyajali.clipboard.manager/ClipboardMonitor { // com.niya
     abstract fun isRunning(): kotlin/Boolean // com.niyajali.clipboard.manager/ClipboardMonitor.isRunning|isRunning(){}[0]
     abstract fun start() // com.niyajali.clipboard.manager/ClipboardMonitor.start|start(){}[0]
     abstract fun stop() // com.niyajali.clipboard.manager/ClipboardMonitor.stop|stop(){}[0]
+
+    final object Companion // com.niyajali.clipboard.manager/ClipboardMonitor.Companion|null[0]
+}
+
+abstract interface com.niyajali.clipboard.manager/PlatformStrategy { // com.niyajali.clipboard.manager/PlatformStrategy|null[0]
+    open val priority // com.niyajali.clipboard.manager/PlatformStrategy.priority|{}priority[0]
+        open fun <get-priority>(): kotlin/Int // com.niyajali.clipboard.manager/PlatformStrategy.priority.<get-priority>|<get-priority>(){}[0]
+
+    abstract fun createMonitor(com.niyajali.clipboard.manager/ClipboardConfig): com.niyajali.clipboard.manager/ClipboardMonitor // com.niyajali.clipboard.manager/PlatformStrategy.createMonitor|createMonitor(com.niyajali.clipboard.manager.ClipboardConfig){}[0]
+    abstract fun isApplicable(): kotlin/Boolean // com.niyajali.clipboard.manager/PlatformStrategy.isApplicable|isApplicable(){}[0]
 }
 
 sealed interface <#A: out kotlin/Any?> com.niyajali.clipboard.manager/ClipboardResult { // com.niyajali.clipboard.manager/ClipboardResult|null[0]
@@ -73,6 +83,45 @@ sealed interface <#A: out kotlin/Any?> com.niyajali.clipboard.manager/ClipboardR
     }
 }
 
+final class com.niyajali.clipboard.manager/ClipboardConfig { // com.niyajali.clipboard.manager/ClipboardConfig|null[0]
+    constructor <init>(com.niyajali.clipboard.manager/ClipboardListener, kotlin/Long = ..., kotlin/Long = ..., kotlin/Boolean = ..., kotlin/Function1<kotlin/Throwable, kotlin/Unit>? = ...) // com.niyajali.clipboard.manager/ClipboardConfig.<init>|<init>(com.niyajali.clipboard.manager.ClipboardListener;kotlin.Long;kotlin.Long;kotlin.Boolean;kotlin.Function1<kotlin.Throwable,kotlin.Unit>?){}[0]
+
+    final val debounceDelayMs // com.niyajali.clipboard.manager/ClipboardConfig.debounceDelayMs|{}debounceDelayMs[0]
+        final fun <get-debounceDelayMs>(): kotlin/Long // com.niyajali.clipboard.manager/ClipboardConfig.debounceDelayMs.<get-debounceDelayMs>|<get-debounceDelayMs>(){}[0]
+    final val enableDuplicateFiltering // com.niyajali.clipboard.manager/ClipboardConfig.enableDuplicateFiltering|{}enableDuplicateFiltering[0]
+        final fun <get-enableDuplicateFiltering>(): kotlin/Boolean // com.niyajali.clipboard.manager/ClipboardConfig.enableDuplicateFiltering.<get-enableDuplicateFiltering>|<get-enableDuplicateFiltering>(){}[0]
+    final val errorHandler // com.niyajali.clipboard.manager/ClipboardConfig.errorHandler|{}errorHandler[0]
+        final fun <get-errorHandler>(): kotlin/Function1<kotlin/Throwable, kotlin/Unit>? // com.niyajali.clipboard.manager/ClipboardConfig.errorHandler.<get-errorHandler>|<get-errorHandler>(){}[0]
+    final val listener // com.niyajali.clipboard.manager/ClipboardConfig.listener|{}listener[0]
+        final fun <get-listener>(): com.niyajali.clipboard.manager/ClipboardListener // com.niyajali.clipboard.manager/ClipboardConfig.listener.<get-listener>|<get-listener>(){}[0]
+    final val pollingIntervalMs // com.niyajali.clipboard.manager/ClipboardConfig.pollingIntervalMs|{}pollingIntervalMs[0]
+        final fun <get-pollingIntervalMs>(): kotlin/Long // com.niyajali.clipboard.manager/ClipboardConfig.pollingIntervalMs.<get-pollingIntervalMs>|<get-pollingIntervalMs>(){}[0]
+
+    final fun component1(): com.niyajali.clipboard.manager/ClipboardListener // com.niyajali.clipboard.manager/ClipboardConfig.component1|component1(){}[0]
+    final fun component2(): kotlin/Long // com.niyajali.clipboard.manager/ClipboardConfig.component2|component2(){}[0]
+    final fun component3(): kotlin/Long // com.niyajali.clipboard.manager/ClipboardConfig.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // com.niyajali.clipboard.manager/ClipboardConfig.component4|component4(){}[0]
+    final fun component5(): kotlin/Function1<kotlin/Throwable, kotlin/Unit>? // com.niyajali.clipboard.manager/ClipboardConfig.component5|component5(){}[0]
+    final fun copy(com.niyajali.clipboard.manager/ClipboardListener = ..., kotlin/Long = ..., kotlin/Long = ..., kotlin/Boolean = ..., kotlin/Function1<kotlin/Throwable, kotlin/Unit>? = ...): com.niyajali.clipboard.manager/ClipboardConfig // com.niyajali.clipboard.manager/ClipboardConfig.copy|copy(com.niyajali.clipboard.manager.ClipboardListener;kotlin.Long;kotlin.Long;kotlin.Boolean;kotlin.Function1<kotlin.Throwable,kotlin.Unit>?){}[0]
+    final fun copy(com.niyajali.clipboard.manager/ClipboardListener? = ..., kotlin/Long? = ..., kotlin/Long? = ..., kotlin/Boolean? = ..., kotlin/Function1<kotlin/Throwable, kotlin/Unit>? = ...): com.niyajali.clipboard.manager/ClipboardConfig // com.niyajali.clipboard.manager/ClipboardConfig.copy|copy(com.niyajali.clipboard.manager.ClipboardListener?;kotlin.Long?;kotlin.Long?;kotlin.Boolean?;kotlin.Function1<kotlin.Throwable,kotlin.Unit>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.niyajali.clipboard.manager/ClipboardConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.niyajali.clipboard.manager/ClipboardConfig.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.niyajali.clipboard.manager/ClipboardConfig.toString|toString(){}[0]
+
+    final object Companion { // com.niyajali.clipboard.manager/ClipboardConfig.Companion|null[0]
+        final const val DEFAULT_DEBOUNCE_DELAY_MS // com.niyajali.clipboard.manager/ClipboardConfig.Companion.DEFAULT_DEBOUNCE_DELAY_MS|{}DEFAULT_DEBOUNCE_DELAY_MS[0]
+            final fun <get-DEFAULT_DEBOUNCE_DELAY_MS>(): kotlin/Long // com.niyajali.clipboard.manager/ClipboardConfig.Companion.DEFAULT_DEBOUNCE_DELAY_MS.<get-DEFAULT_DEBOUNCE_DELAY_MS>|<get-DEFAULT_DEBOUNCE_DELAY_MS>(){}[0]
+        final const val DEFAULT_ENABLE_DUPLICATE_FILTERING // com.niyajali.clipboard.manager/ClipboardConfig.Companion.DEFAULT_ENABLE_DUPLICATE_FILTERING|{}DEFAULT_ENABLE_DUPLICATE_FILTERING[0]
+            final fun <get-DEFAULT_ENABLE_DUPLICATE_FILTERING>(): kotlin/Boolean // com.niyajali.clipboard.manager/ClipboardConfig.Companion.DEFAULT_ENABLE_DUPLICATE_FILTERING.<get-DEFAULT_ENABLE_DUPLICATE_FILTERING>|<get-DEFAULT_ENABLE_DUPLICATE_FILTERING>(){}[0]
+        final const val DEFAULT_POLLING_INTERVAL_MS // com.niyajali.clipboard.manager/ClipboardConfig.Companion.DEFAULT_POLLING_INTERVAL_MS|{}DEFAULT_POLLING_INTERVAL_MS[0]
+            final fun <get-DEFAULT_POLLING_INTERVAL_MS>(): kotlin/Long // com.niyajali.clipboard.manager/ClipboardConfig.Companion.DEFAULT_POLLING_INTERVAL_MS.<get-DEFAULT_POLLING_INTERVAL_MS>|<get-DEFAULT_POLLING_INTERVAL_MS>(){}[0]
+
+        final fun default(com.niyajali.clipboard.manager/ClipboardListener): com.niyajali.clipboard.manager/ClipboardConfig // com.niyajali.clipboard.manager/ClipboardConfig.Companion.default|default(com.niyajali.clipboard.manager.ClipboardListener){}[0]
+        final fun highFrequency(com.niyajali.clipboard.manager/ClipboardListener): com.niyajali.clipboard.manager/ClipboardConfig // com.niyajali.clipboard.manager/ClipboardConfig.Companion.highFrequency|highFrequency(com.niyajali.clipboard.manager.ClipboardListener){}[0]
+        final fun lowPower(com.niyajali.clipboard.manager/ClipboardListener): com.niyajali.clipboard.manager/ClipboardConfig // com.niyajali.clipboard.manager/ClipboardConfig.Companion.lowPower|lowPower(com.niyajali.clipboard.manager.ClipboardListener){}[0]
+    }
+}
+
 final class com.niyajali.clipboard.manager/ClipboardContent { // com.niyajali.clipboard.manager/ClipboardContent|null[0]
     constructor <init>(kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin.collections/List<kotlin/String>? = ..., kotlin/Boolean = ..., kotlin/Long) // com.niyajali.clipboard.manager/ClipboardContent.<init>|<init>(kotlin.String?;kotlin.String?;kotlin.String?;kotlin.collections.List<kotlin.String>?;kotlin.Boolean;kotlin.Long){}[0]
 
@@ -103,45 +152,41 @@ final class com.niyajali.clipboard.manager/ClipboardContent { // com.niyajali.cl
     final fun toString(): kotlin/String // com.niyajali.clipboard.manager/ClipboardContent.toString|toString(){}[0]
 }
 
-final object com.niyajali.clipboard.manager/ClipboardMonitorFactory { // com.niyajali.clipboard.manager/ClipboardMonitorFactory|null[0]
-    final fun create(com.niyajali.clipboard.manager/ClipboardListener): com.niyajali.clipboard.manager/ClipboardMonitor // com.niyajali.clipboard.manager/ClipboardMonitorFactory.create|create(com.niyajali.clipboard.manager.ClipboardListener){}[0]
+final class com.niyajali.clipboard.manager/ClipboardMonitorBuilder { // com.niyajali.clipboard.manager/ClipboardMonitorBuilder|null[0]
+    constructor <init>() // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.<init>|<init>(){}[0]
+
+    final fun build(): com.niyajali.clipboard.manager/ClipboardMonitor // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.build|build(){}[0]
+    final fun buildConfig(): com.niyajali.clipboard.manager/ClipboardConfig // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.buildConfig|buildConfig(){}[0]
+    final fun enableDuplicateFiltering(kotlin/Boolean): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.enableDuplicateFiltering|enableDuplicateFiltering(kotlin.Boolean){}[0]
+    final fun setDebounceDelay(kotlin/Long): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.setDebounceDelay|setDebounceDelay(kotlin.Long){}[0]
+    final fun setErrorHandler(kotlin/Function1<kotlin/Throwable, kotlin/Unit>?): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.setErrorHandler|setErrorHandler(kotlin.Function1<kotlin.Throwable,kotlin.Unit>?){}[0]
+    final fun setListener(com.niyajali.clipboard.manager/ClipboardListener): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.setListener|setListener(com.niyajali.clipboard.manager.ClipboardListener){}[0]
+    final fun setPollingInterval(kotlin/Long): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.setPollingInterval|setPollingInterval(kotlin.Long){}[0]
+    final fun useBalancedPreset(): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.useBalancedPreset|useBalancedPreset(){}[0]
+    final fun useHighFrequencyPreset(): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.useHighFrequencyPreset|useHighFrequencyPreset(){}[0]
+    final fun useLowPowerPreset(): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.useLowPowerPreset|useLowPowerPreset(){}[0]
+
+    final object Companion { // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.Companion|null[0]
+        final fun create(): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/ClipboardMonitorBuilder.Companion.create|create(){}[0]
+    }
 }
 
-final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardContent$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardContent$stableprop|#static{}com_niyajali_clipboard_manager_ClipboardContent$stableprop[0]
-final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardMonitorFactory$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardMonitorFactory$stableprop|#static{}com_niyajali_clipboard_manager_ClipboardMonitorFactory$stableprop[0]
-final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Empty$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Empty$stableprop|#static{}com_niyajali_clipboard_manager_ClipboardResult_Empty$stableprop[0]
-final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Error$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Error$stableprop|#static{}com_niyajali_clipboard_manager_ClipboardResult_Error$stableprop[0]
-final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_PermissionDenied$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_PermissionDenied$stableprop|#static{}com_niyajali_clipboard_manager_ClipboardResult_PermissionDenied$stableprop[0]
-final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Success$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Success$stableprop|#static{}com_niyajali_clipboard_manager_ClipboardResult_Success$stableprop[0]
-final val io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res$stableprop // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res$stableprop|#static{}io_github_niyajali_clipboard_manager_generated_resources_Res$stableprop[0]
-final val io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_array$stableprop // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_array$stableprop|#static{}io_github_niyajali_clipboard_manager_generated_resources_Res_array$stableprop[0]
-final val io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_drawable$stableprop // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_drawable$stableprop|#static{}io_github_niyajali_clipboard_manager_generated_resources_Res_drawable$stableprop[0]
-final val io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_font$stableprop // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_font$stableprop|#static{}io_github_niyajali_clipboard_manager_generated_resources_Res_font$stableprop[0]
-final val io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_plurals$stableprop // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_plurals$stableprop|#static{}io_github_niyajali_clipboard_manager_generated_resources_Res_plurals$stableprop[0]
-final val io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_string$stableprop // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_string$stableprop|#static{}io_github_niyajali_clipboard_manager_generated_resources_Res_string$stableprop[0]
+final object com.niyajali.clipboard.manager/ClipboardMonitorFactory { // com.niyajali.clipboard.manager/ClipboardMonitorFactory|null[0]
+    final fun create(com.niyajali.clipboard.manager/ClipboardConfig): com.niyajali.clipboard.manager/ClipboardMonitor // com.niyajali.clipboard.manager/ClipboardMonitorFactory.create|create(com.niyajali.clipboard.manager.ClipboardConfig){}[0]
+    final fun create(com.niyajali.clipboard.manager/ClipboardListener): com.niyajali.clipboard.manager/ClipboardMonitor // com.niyajali.clipboard.manager/ClipboardMonitorFactory.create|create(com.niyajali.clipboard.manager.ClipboardListener){}[0]
+}
 
 final fun (com.niyajali.clipboard.manager/ClipboardMonitor).com.niyajali.clipboard.manager/asFlow(): kotlinx.coroutines.flow/Flow<com.niyajali.clipboard.manager/ClipboardContent> // com.niyajali.clipboard.manager/asFlow|asFlow@com.niyajali.clipboard.manager.ClipboardMonitor(){}[0]
 final fun (com.niyajali.clipboard.manager/ClipboardMonitor).com.niyajali.clipboard.manager/filesFlow(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<kotlin/String>> // com.niyajali.clipboard.manager/filesFlow|filesFlow@com.niyajali.clipboard.manager.ClipboardMonitor(){}[0]
 final fun (com.niyajali.clipboard.manager/ClipboardMonitor).com.niyajali.clipboard.manager/imageAvailableFlow(): kotlinx.coroutines.flow/Flow<kotlin/Boolean> // com.niyajali.clipboard.manager/imageAvailableFlow|imageAvailableFlow@com.niyajali.clipboard.manager.ClipboardMonitor(){}[0]
 final fun (com.niyajali.clipboard.manager/ClipboardMonitor).com.niyajali.clipboard.manager/textFlow(kotlin/Boolean = ...): kotlinx.coroutines.flow/Flow<kotlin/String?> // com.niyajali.clipboard.manager/textFlow|textFlow@com.niyajali.clipboard.manager.ClipboardMonitor(kotlin.Boolean){}[0]
+final fun (com.niyajali.clipboard.manager/ClipboardMonitor.Companion).com.niyajali.clipboard.manager/Builder(): com.niyajali.clipboard.manager/ClipboardMonitorBuilder // com.niyajali.clipboard.manager/Builder|Builder@com.niyajali.clipboard.manager.ClipboardMonitor.Companion(){}[0]
 final fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/getOrDefault(#A): #A // com.niyajali.clipboard.manager/getOrDefault|getOrDefault@com.niyajali.clipboard.manager.ClipboardResult<0:0>(0:0){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/getOrNull(): #A? // com.niyajali.clipboard.manager/getOrNull|getOrNull@com.niyajali.clipboard.manager.ClipboardResult<0:0>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/getOrThrow(): #A // com.niyajali.clipboard.manager/getOrThrow|getOrThrow@com.niyajali.clipboard.manager.ClipboardResult<0:0>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/isEmpty(): kotlin/Boolean // com.niyajali.clipboard.manager/isEmpty|isEmpty@com.niyajali.clipboard.manager.ClipboardResult<0:0>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/isFailure(): kotlin/Boolean // com.niyajali.clipboard.manager/isFailure|isFailure@com.niyajali.clipboard.manager.ClipboardResult<0:0>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/isSuccess(): kotlin/Boolean // com.niyajali.clipboard.manager/isSuccess|isSuccess@com.niyajali.clipboard.manager.ClipboardResult<0:0>(){0§<kotlin.Any?>}[0]
-final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardContent$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardContent$stableprop_getter|com_niyajali_clipboard_manager_ClipboardContent$stableprop_getter(){}[0]
-final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardMonitorFactory$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardMonitorFactory$stableprop_getter|com_niyajali_clipboard_manager_ClipboardMonitorFactory$stableprop_getter(){}[0]
-final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Empty$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Empty$stableprop_getter|com_niyajali_clipboard_manager_ClipboardResult_Empty$stableprop_getter(){}[0]
-final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Error$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Error$stableprop_getter|com_niyajali_clipboard_manager_ClipboardResult_Error$stableprop_getter(){}[0]
-final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_PermissionDenied$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_PermissionDenied$stableprop_getter|com_niyajali_clipboard_manager_ClipboardResult_PermissionDenied$stableprop_getter(){}[0]
-final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Success$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_ClipboardResult_Success$stableprop_getter|com_niyajali_clipboard_manager_ClipboardResult_Success$stableprop_getter(){}[0]
-final fun io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res$stableprop_getter(): kotlin/Int // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res$stableprop_getter|io_github_niyajali_clipboard_manager_generated_resources_Res$stableprop_getter(){}[0]
-final fun io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_array$stableprop_getter(): kotlin/Int // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_array$stableprop_getter|io_github_niyajali_clipboard_manager_generated_resources_Res_array$stableprop_getter(){}[0]
-final fun io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_drawable$stableprop_getter(): kotlin/Int // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_drawable$stableprop_getter|io_github_niyajali_clipboard_manager_generated_resources_Res_drawable$stableprop_getter(){}[0]
-final fun io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_font$stableprop_getter(): kotlin/Int // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_font$stableprop_getter|io_github_niyajali_clipboard_manager_generated_resources_Res_font$stableprop_getter(){}[0]
-final fun io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_plurals$stableprop_getter(): kotlin/Int // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_plurals$stableprop_getter|io_github_niyajali_clipboard_manager_generated_resources_Res_plurals$stableprop_getter(){}[0]
-final fun io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_string$stableprop_getter(): kotlin/Int // io.github.niyajali.clipboard_manager.generated.resources/io_github_niyajali_clipboard_manager_generated_resources_Res_string$stableprop_getter|io_github_niyajali_clipboard_manager_generated_resources_Res_string$stableprop_getter(){}[0]
 final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/flatMap(kotlin/Function1<#A, com.niyajali.clipboard.manager/ClipboardResult<#B>>): com.niyajali.clipboard.manager/ClipboardResult<#B> // com.niyajali.clipboard.manager/flatMap|flatMap@com.niyajali.clipboard.manager.ClipboardResult<0:0>(kotlin.Function1<0:0,com.niyajali.clipboard.manager.ClipboardResult<0:1>>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/map(kotlin/Function1<#A, #B>): com.niyajali.clipboard.manager/ClipboardResult<#B> // com.niyajali.clipboard.manager/map|map@com.niyajali.clipboard.manager.ClipboardResult<0:0>(kotlin.Function1<0:0,0:1>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/onEmpty(kotlin/Function0<kotlin/Unit>): com.niyajali.clipboard.manager/ClipboardResult<#A> // com.niyajali.clipboard.manager/onEmpty|onEmpty@com.niyajali.clipboard.manager.ClipboardResult<0:0>(kotlin.Function0<kotlin.Unit>){0§<kotlin.Any?>}[0]
@@ -154,15 +199,3 @@ final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipb
 
 // Targets: [ios]
 final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter|com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter(){}[0]
-
-// Targets: [js]
-final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop|#static{}com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop[0]
-
-// Targets: [js]
-final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop_getter|com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop_getter(){}[0]
-
-// Targets: [wasmJs]
-final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_WasmJSClipboardMonitor$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_WasmJSClipboardMonitor$stableprop|#static{}com_niyajali_clipboard_manager_WasmJSClipboardMonitor$stableprop[0]
-
-// Targets: [wasmJs]
-final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_WasmJSClipboardMonitor$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_WasmJSClipboardMonitor$stableprop_getter|com_niyajali_clipboard_manager_WasmJSClipboardMonitor$stableprop_getter(){}[0]

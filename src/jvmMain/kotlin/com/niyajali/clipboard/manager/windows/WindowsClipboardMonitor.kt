@@ -24,6 +24,7 @@ package com.niyajali.clipboard.manager.windows
 import com.niyajali.clipboard.manager.ClipboardContent
 import com.niyajali.clipboard.manager.ClipboardListener
 import com.niyajali.clipboard.manager.ClipboardMonitor
+import com.niyajali.clipboard.manager.internal.sha1
 import com.sun.jna.Pointer
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.User32
@@ -49,7 +50,11 @@ private const val WM_QUIT = 0x0012
 private const val WM_DESTROY = 0x0002
 private const val WS_POPUP = 0x80000000.toInt()
 
-internal class WindowsClipboardMonitor(private val listener: ClipboardListener) : ClipboardMonitor {
+internal class WindowsClipboardMonitor(
+    private val listener: ClipboardListener,
+    private val enableDuplicateFiltering: Boolean = true,
+    private val errorHandler: ((Throwable) -> Unit)? = null,
+) : ClipboardMonitor {
     // Keep a strong reference to the WindowProc to prevent GC.
     private val wndProc: WindowProc = WindowProc { h, msg, w, l ->
         handleMessage(h, msg, w, l)
@@ -62,6 +67,7 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
     private val started = CountDownLatch(1)
     private val startError = AtomicReference<Throwable?>(null)
     private var shutdownHook: Thread? = null
+    private var lastSignature: String? = null
 
     override fun start() {
         if (running.get()) return
@@ -72,6 +78,7 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
                 createMessageWindow()
             } catch (e: Throwable) {
                 startError.set(e)
+                errorHandler?.invoke(e)
             } finally {
                 // Unblock the starter regardless of success/failure
                 started.countDown()
@@ -112,6 +119,7 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
             runCatching { Runtime.getRuntime().removeShutdownHook(hook) }
         }
         shutdownHook = null
+        lastSignature = null
         hwnd?.let { User32.INSTANCE.PostMessage(it, WM_QUIT, WPARAM(0), LPARAM(0)) }
         thread?.join(5000)
     }
@@ -124,31 +132,36 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
         val code = Kernel32.INSTANCE.GetLastError()
         if (code == 0) return "$prefix (GetLastError=0)"
 
-        val flags = WinBase.FORMAT_MESSAGE_FROM_SYSTEM or
-            WinBase.FORMAT_MESSAGE_IGNORE_INSERTS or
-            WinBase.FORMAT_MESSAGE_ALLOCATE_BUFFER
+        return runCatching {
+            val flags = WinBase.FORMAT_MESSAGE_FROM_SYSTEM or
+                WinBase.FORMAT_MESSAGE_IGNORE_INSERTS or
+                WinBase.FORMAT_MESSAGE_ALLOCATE_BUFFER
 
-        val out = PointerByReference()
-        val len = Kernel32.INSTANCE.FormatMessage(
-            flags,
-            null,
-            code,
-            0,
-            out,
-            0,
-            null,
-        )
-        if (len == 0) {
-            return "$prefix (error $code: <failed to format message>)"
-        }
+            val out = PointerByReference()
+            val len = Kernel32.INSTANCE.FormatMessage(
+                flags,
+                null,
+                code,
+                0,
+                out,
+                0,
+                null,
+            )
+            
+            if (len == 0) {
+                return "$prefix (error $code: <failed to format message>)"
+            }
 
-        val ptr: Pointer = out.value
-        val msg = try {
-            ptr.getWideString(0).trim()
-        } finally {
-            Kernel32.INSTANCE.LocalFree(ptr)
+            val ptr: Pointer = out.value
+            try {
+                val msg = ptr.getWideString(0).trim()
+                "$prefix (error $code: $msg)"
+            } finally {
+                Kernel32.INSTANCE.LocalFree(ptr)
+            }
+        }.getOrElse {
+            "$prefix (error $code: <failed to format message>)"
         }
-        return "$prefix (error $code: $msg)"
     }
 
     private fun createMessageWindow() {
@@ -201,21 +214,40 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
         }
     }
 
-    private fun handleMessage(hwnd: HWND, uMsg: Int, wParam: WPARAM, lParam: LPARAM): LRESULT = when (uMsg) {
-        WM_CLIPBOARDUPDATE -> {
-            try {
-                listener.onClipboardChange(readClipboard())
-            } catch (_: Throwable) {
+    private fun handleMessage(hwnd: HWND, uMsg: Int, wParam: WPARAM, lParam: LPARAM): LRESULT {
+        return when (uMsg) {
+            WM_CLIPBOARDUPDATE -> {
+                try {
+                    val content = readClipboard()
+
+                    // Check for duplicates if filtering is enabled
+                    if (enableDuplicateFiltering) {
+                        val signature = signatureOf(content)
+                        if (signature == lastSignature) {
+                            return LRESULT(0) // Skip duplicate content
+                        }
+                        lastSignature = signature
+                    }
+
+                    // Notify listener
+                    try {
+                        listener.onClipboardChange(content)
+                    } catch (e: Throwable) {
+                        errorHandler?.invoke(e)
+                    }
+                } catch (e: Throwable) {
+                    errorHandler?.invoke(e)
+                }
+                LRESULT(0)
             }
-            LRESULT(0)
-        }
 
-        WM_DESTROY -> {
-            User32.INSTANCE.PostQuitMessage(0)
-            LRESULT(0)
-        }
+            WM_DESTROY -> {
+                User32.INSTANCE.PostQuitMessage(0)
+                LRESULT(0)
+            }
 
-        else -> User32.INSTANCE.DefWindowProc(hwnd, uMsg, wParam, lParam)
+            else -> User32.INSTANCE.DefWindowProc(hwnd, uMsg, wParam, lParam)
+        }
     }
 
     private fun loop() {
@@ -287,5 +319,36 @@ internal class WindowsClipboardMonitor(private val listener: ClipboardListener) 
             imageAvailable = imageAvailable,
             timestamp = System.currentTimeMillis(),
         )
+    }
+
+    /**
+     * Generates a lightweight signature for clipboard content.
+     */
+    private fun signatureOf(content: ClipboardContent): String {
+        val sb = StringBuilder(128)
+
+        fun add(name: String, value: String?) {
+            if (value != null) {
+                sb.append(name).append('#').append(value.length).append(';')
+                sb.append(value.take(64)).append('|')
+            } else {
+                sb.append(name).append("#0;|")
+            }
+        }
+
+        add("t", content.text)
+        add("h", content.html)
+        add("r", content.rtf)
+        sb.append("i#").append(if (content.imageAvailable) 1 else 0).append('|')
+
+        val fileList = content.files
+        if (fileList != null) {
+            sb.append("f#").append(fileList.size).append('|')
+            fileList.take(8).forEach { sb.append(it).append('|') }
+        } else {
+            sb.append("f#0|")
+        }
+
+        return sha1(sb.toString())
     }
 }

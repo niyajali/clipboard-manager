@@ -28,7 +28,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import java.security.MessageDigest
+import com.niyajali.clipboard.manager.internal.sha1
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -40,10 +40,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * **Features:**
  * - Efficient event-driven monitoring (no polling)
- * - Automatic debouncing (default: 50ms) to coalesce rapid changes
- * - Duplicate detection using content signatures
+ * - Configurable debouncing to coalesce rapid changes
+ * - Optional duplicate detection using content signatures
  * - Main thread callbacks (safe for UI updates)
  * - Support for text, HTML, URIs, and image detection
+ * - Custom error handling support
  *
  * **Supported Content Types:**
  * - **Text**: Plain text content via `ClipData.Item.coerceToText()`
@@ -77,6 +78,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @param context The application context (provided by [ClipboardMonitorFactory])
  * @param listener The listener to receive clipboard change notifications
  * @param debounceMillis Debounce delay in milliseconds (default: 50ms)
+ * @param enableDuplicateFiltering Enable duplicate content filtering (default: true)
+ * @param errorHandler Optional callback for internal errors
  *
  * @see ClipboardMonitor
  * @see ClipboardMonitorFactory
@@ -86,6 +89,8 @@ internal class AndroidClipboardMonitor(
     private val context: Context,
     private val listener: ClipboardListener,
     private val debounceMillis: Long = 50L,
+    private val enableDuplicateFiltering: Boolean = true,
+    private val errorHandler: ((Throwable) -> Unit)? = null,
 ) : ClipboardMonitor {
 
     private val running = AtomicBoolean(false)
@@ -105,18 +110,27 @@ internal class AndroidClipboardMonitor(
     private val notifyRunnable = Runnable {
         if (!running.get()) return@Runnable
 
-        val content = readClipboard()
-        val signature = signatureOf(content)
+        try {
+            val content = readClipboard()
 
-        // Only notify if content has actually changed (prevent duplicates)
-        if (signature != lastSignature) {
-            lastSignature = signature
+            // Check for duplicates if filtering is enabled
+            if (enableDuplicateFiltering) {
+                val signature = signatureOf(content)
+                if (signature == lastSignature) {
+                    return@Runnable // Skip duplicate content
+                }
+                lastSignature = signature
+            }
+
+            // Notify listener
             try {
                 listener.onClipboardChange(content)
             } catch (e: Throwable) {
                 // Listener exceptions must not stop monitoring
-                // Silently catch to maintain robustness
+                errorHandler?.invoke(e)
             }
+        } catch (e: Throwable) {
+            errorHandler?.invoke(e)
         }
     }
 
@@ -136,7 +150,9 @@ internal class AndroidClipboardMonitor(
 
         // Register listener and fire initial snapshot (both on main thread)
         mainHandler.post {
-            runCatching { clipboardManager.addPrimaryClipChangedListener(callback) }
+            runCatching {
+                clipboardManager.addPrimaryClipChangedListener(callback)
+            }.onFailure { errorHandler?.invoke(it) }
             notifyRunnable.run()
         }
     }
@@ -152,7 +168,9 @@ internal class AndroidClipboardMonitor(
         if (!running.getAndSet(false)) return
 
         mainHandler.post {
-            runCatching { clipboardManager.removePrimaryClipChangedListener(callback) }
+            runCatching {
+                clipboardManager.removePrimaryClipChangedListener(callback)
+            }.onFailure { errorHandler?.invoke(it) }
         }
         mainHandler.removeCallbacksAndMessages(null)
         lastSignature = null
@@ -294,25 +312,5 @@ internal class AndroidClipboardMonitor(
         }
 
         return sha1(sb.toString())
-    }
-
-    /**
-     * Computes SHA-1 hash of a string.
-     *
-     * @param input The string to hash
-     * @return Hexadecimal representation of the SHA-1 hash
-     */
-    private fun sha1(input: String): String {
-        val md = MessageDigest.getInstance("SHA-1")
-        val bytes = md.digest(input.toByteArray(Charsets.UTF_8))
-        val hex = CharArray(bytes.size * 2)
-        val hexChars = "0123456789abcdef".toCharArray()
-        var index = 0
-        for (byte in bytes) {
-            val value = byte.toInt() and 0xFF
-            hex[index++] = hexChars[value ushr 4]
-            hex[index++] = hexChars[value and 0x0F]
-        }
-        return String(hex)
     }
 }

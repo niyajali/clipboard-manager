@@ -2,12 +2,14 @@ name: Build
 
 on:
   push:
-    branches-ignore:
+    branches:
       - main
-    tags-ignore:
-      - '**'
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"

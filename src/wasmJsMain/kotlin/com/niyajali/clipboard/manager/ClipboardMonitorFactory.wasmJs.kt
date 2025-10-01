@@ -22,94 +22,63 @@
 package com.niyajali.clipboard.manager
 
 /**
- * WebAssembly JavaScript-specific implementation of [ClipboardMonitorFactory].
- *
- * This factory creates clipboard monitors that work in WebAssembly/JavaScript
- * environments. It uses a similar implementation to the standard JS target but
- * is optimized for WASM interop.
- *
- * **Browser Requirements:**
- * - WebAssembly support
- * - Secure context (HTTPS or localhost)
- * - Modern browser with Clipboard API support
- * - User permission for clipboard access
- *
- * **Usage Example:**
- * ```kotlin
- * val listener = object : ClipboardListener {
- *     override fun onClipboardChange(content: ClipboardContent) {
- *         console.log("Clipboard: ${content.text}")
- *     }
- * }
- *
- * val monitor = ClipboardMonitorFactory.create(listener)
- * monitor.start()
- * ```
- *
- * **Note:** This implementation is similar to the JS implementation but compiled
- * to WebAssembly for potentially better performance and smaller bundle sizes.
- *
- * @see ClipboardMonitor
- * @since 1.0.0
+ * WebAssembly JavaScript platform implementation.
  */
-public actual object ClipboardMonitorFactory {
-    /**
-     * Creates a new clipboard monitor for WebAssembly/JavaScript environment.
-     *
-     * The monitor uses polling to detect clipboard changes as browsers don't
-     * provide native change events for the clipboard.
-     *
-     * **Permission:** The browser will prompt the user for clipboard read
-     * permission when the monitor first accesses the clipboard.
-     *
-     * @param listener The listener that will receive clipboard change notifications
-     *
-     * @return A new clipboard monitor instance in a stopped state
-     */
-    public actual fun create(listener: ClipboardListener): ClipboardMonitor {
-        // Note: For WasmJS, we can use a simple text-only implementation
-        // or share code with JS implementation
-        return WasmJSClipboardMonitor(listener)
+private class WasmJSStrategy : PlatformStrategy {
+    override val priority: Int = 100
+
+    override fun isApplicable(): Boolean = true
+
+    override fun createMonitor(config: ClipboardConfig): ClipboardMonitor {
+        return StubClipboardMonitor()
     }
 }
 
 /**
- * Internal WebAssembly-specific clipboard monitor implementation.
+ * Creates clipboard monitors for WebAssembly JavaScript.
  *
- * This is a simplified implementation optimized for WASM targets.
- * It focuses on text content only for maximum compatibility.
+ * **Experimental:** WasmJS support is limited and uses the same browser
+ * Clipboard API as the regular JS target.
+ *
+ * For production use, prefer the JS target which has full clipboard monitoring support.
+ *
+ * @since 1.0.0
  */
-internal class WasmJSClipboardMonitor(
-    private val listener: ClipboardListener,
-    private val pollingIntervalMs: Int = 500,
-) : ClipboardMonitor {
+public actual object ClipboardMonitorFactory {
+    internal actual val registry: PlatformRegistry = PlatformRegistry()
 
-    private var running = false
-    private var lastText: String? = null
-
-    override fun start() {
-        if (running) return
-        running = true
-        // TODO: Implement WASM-specific clipboard polling
-        // For now, this is a placeholder that can be enhanced
-//        console.log("WasmJS ClipboardMonitor started (basic implementation)")
+    init {
+        registry.register(WasmJSStrategy())
     }
 
-    override fun stop() {
-        if (!running) return
-        running = false
-        lastText = null
-//        console.log("WasmJS ClipboardMonitor stopped")
+    /**
+     * Creates a clipboard monitor with the specified configuration.
+     *
+     * **Note:** WasmJS is experimental and not fully supported.
+     * Use the JS target for browser clipboard monitoring.
+     *
+     * @param config The configuration for the monitor
+     * @return A new clipboard monitor
+     * @throws UnsupportedOperationException WasmJS is not yet fully supported
+     */
+    public actual fun create(config: ClipboardConfig): ClipboardMonitor {
+        val strategy = registry.selectStrategy()
+            ?: throw UnsupportedOperationException(
+                "No applicable clipboard strategy found for WasmJS platform. " +
+                    "Use the JS target for browser clipboard monitoring.",
+            )
+
+        return strategy.createMonitor(config)
     }
 
-    override fun isRunning(): Boolean = running
-
-    override fun getCurrentContent(): ClipboardContent = ClipboardContent(
-        text = null,
-        html = null,
-        rtf = null,
-        files = null,
-        imageAvailable = false,
-        timestamp = 0,
-    )
+    /**
+     * Creates a clipboard monitor with default configuration.
+     *
+     * @param listener The listener to receive clipboard change notifications
+     * @return A new Android clipboard monitor with default settings
+     * @throws IllegalStateException if the factory has not been initialized
+     */
+    public actual fun create(listener: ClipboardListener): ClipboardMonitor {
+        return create(ClipboardConfig.default(listener))
+    }
 }

@@ -21,10 +21,13 @@
  */
 package com.niyajali.clipboard.manager
 
+import com.niyajali.clipboard.manager.internal.sha1
 import kotlinx.browser.window
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.await
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.js.Promise
 
@@ -45,16 +48,18 @@ import kotlin.js.Promise
  * If permission is denied, [getCurrentContent] will return empty content.
  *
  * **Limitations:**
- * - No native change events; uses polling (default: 500ms interval)
+ * - No native change events; uses polling (configurable interval)
  * - Requires secure context (HTTPS or localhost)
  * - RTF format not supported (always null)
  * - File access is limited by browser security
  * - Image detection is basic (based on MIME types)
+ * - Configurable duplicate filtering
+ * - Optional error handling
  *
  * **Security Context:**
  * ```kotlin
  * // Check if clipboard is available
- * if (window.navigator.clipboard != null) {
+ * if (window.navigator.asDynamic().clipboard != null) {
  *     val monitor = ClipboardMonitorFactory.create(listener)
  *     monitor.start()
  * } else {
@@ -64,27 +69,34 @@ import kotlin.js.Promise
  *
  * @param listener The listener to receive clipboard change notifications
  * @param pollingIntervalMs Polling interval in milliseconds (default: 500ms)
+ * @param enableDuplicateFiltering Enable duplicate content filtering (default: true)
+ * @param errorHandler Optional callback for internal errors
  *
  * @see ClipboardMonitor
  * @see <a href="https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API">MDN Clipboard API</a>
  * @since 1.0.0
  */
-@OptIn(DelicateCoroutinesApi::class)
 internal class JSClipboardMonitor(
     private val listener: ClipboardListener,
     private val pollingIntervalMs: Int = 500,
+    private val enableDuplicateFiltering: Boolean = true,
+    private val errorHandler: ((Throwable) -> Unit)? = null,
 ) : ClipboardMonitor {
 
     private var running = false
     private var intervalId: Int? = null
     private var lastHash: String? = null
     private val clipboard = window.navigator.asDynamic().clipboard
+    
+    // Use a custom scope with SupervisorJob for proper lifecycle management
+    private val clipboardScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     /**
      * Starts monitoring the clipboard using polling.
      *
      * Sets up a periodic timer that checks the clipboard content and notifies
-     * the listener when changes are detected.
+     * the listener when changes are detected. Uses structured concurrency
+     * with a dedicated coroutine scope.
      *
      * **Permission Prompt:** The browser may prompt the user for clipboard
      * read permission when this method is called or during the first poll.
@@ -107,7 +119,7 @@ internal class JSClipboardMonitor(
     /**
      * Stops monitoring the clipboard and releases resources.
      *
-     * Cancels the polling timer.
+     * Cancels the polling timer and all running coroutines.
      */
     override fun stop() {
         if (!running) return
@@ -116,6 +128,9 @@ internal class JSClipboardMonitor(
         intervalId?.let { window.clearInterval(it) }
         intervalId = null
         lastHash = null
+        
+        // Cancel all coroutines in the scope
+        clipboardScope.cancel()
     }
 
     /**
@@ -148,6 +163,7 @@ internal class JSClipboardMonitor(
             timestamp = js("Date.now()") as Long,
         )
     } catch (e: Throwable) {
+        errorHandler?.invoke(e)
         ClipboardContent(timestamp = js("Date.now()") as Long)
     }
 
@@ -158,22 +174,26 @@ internal class JSClipboardMonitor(
      */
     private fun checkClipboard() {
         if (clipboard == null || clipboard == undefined) {
-            console.warn("Clipboard API not available (requires HTTPS)")
+            errorHandler?.invoke(IllegalStateException("Clipboard API not available (requires HTTPS)"))
             return
         }
 
-        GlobalScope.launch {
+        clipboardScope.launch {
             try {
                 val content = readClipboardAsync()
-                val hash = hashContent(content)
-
-                if (hash != lastHash) {
+                
+                if (enableDuplicateFiltering) {
+                    val hash = hashContent(content)
+                    if (hash == lastHash) {
+                        return@launch // Skip duplicate content
+                    }
                     lastHash = hash
-                    listener.onClipboardChange(content)
                 }
+
+                listener.onClipboardChange(content)
             } catch (e: Throwable) {
                 // Permission denied or other error - silently ignore
-                console.log("Clipboard read failed: ${e.message}")
+                errorHandler?.invoke(e)
             }
         }
     }
@@ -199,6 +219,7 @@ internal class JSClipboardMonitor(
             )
         } catch (e: Throwable) {
             // Permission denied or not available
+            errorHandler?.invoke(e)
             ClipboardContent(timestamp = timestamp)
         }
     }
@@ -208,6 +229,6 @@ internal class JSClipboardMonitor(
      */
     private fun hashContent(content: ClipboardContent): String {
         val text = content.text ?: ""
-        return "${text.length}-${text.take(64).hashCode()}"
+        return sha1("${text.length}-${text.take(64)}")
     }
 }

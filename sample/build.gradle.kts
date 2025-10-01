@@ -4,10 +4,10 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.androidApplication) apply true
+    alias(libs.plugins.kotlinMultiplatform) apply true
+    alias(libs.plugins.composeMultiplatform) apply true
+    alias(libs.plugins.composeCompiler) apply true
 }
 
 kotlin {
@@ -33,6 +33,15 @@ kotlin {
         }
     }
 
+    js {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "sample.js"
+            }
+        }
+        binaries.executable()
+    }
+
     wasmJs {
         browser {
             commonWebpackConfig {
@@ -43,8 +52,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // Compose Signature Library
-            implementation(project(":clipboard-manager"))
+            // Compose Library
+            implementation(project(":"))
             
             // Compose Multiplatform core dependencies
             implementation(compose.runtime)
@@ -74,7 +83,7 @@ kotlin {
             }
         }
 
-        wasmJsMain.dependencies {
+        jsMain.dependencies {
             implementation(libs.kotlinx.coroutines.core.js)
         }
     }
@@ -139,8 +148,4 @@ compose.desktop {
             }
         }
     }
-}
-
-compose.experimental {
-    web.application {}
 }

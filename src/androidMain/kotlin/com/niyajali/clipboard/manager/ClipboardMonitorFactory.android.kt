@@ -23,30 +23,38 @@ package com.niyajali.clipboard.manager
 
 import android.content.Context
 import androidx.annotation.RestrictTo
+import com.niyajali.clipboard.manager.ClipboardMonitorFactory.init
 
 /**
- * Android-specific implementation of [ClipboardMonitorFactory].
+ * Android platform implementation for creating clipboard monitors.
+ */
+private class AndroidStrategy(private val context: Context) : PlatformStrategy {
+    override val priority: Int = 100
+
+    override fun isApplicable(): Boolean = true
+
+    override fun createMonitor(config: ClipboardConfig): ClipboardMonitor {
+        return AndroidClipboardMonitor(
+            context = context,
+            listener = config.listener,
+            debounceMillis = config.debounceDelayMs,
+            enableDuplicateFiltering = config.enableDuplicateFiltering,
+            errorHandler = config.errorHandler,
+        )
+    }
+}
+
+/**
+ * Creates clipboard monitors for Android.
  *
- * This factory creates [AndroidClipboardMonitor] instances that use the Android
- * `ClipboardManager` API to monitor clipboard changes efficiently.
+ * Uses Android's ClipboardManager API for efficient, event-driven clipboard monitoring.
+ * Automatically registers itself via AndroidX Startup, so manual initialization is
+ * typically not required.
  *
- * **Initialization:**
+ * **Automatic Initialization:**
+ * The library initializes automatically when your app starts. No manual setup needed.
  *
- * The factory requires a Context to be initialized before creating monitors.
- * This happens automatically via AndroidX Startup:
- *
- * ```kotlin
- * // No manual initialization needed!
- * // ClipboardInitializer handles this automatically
- *
- * val monitor = ClipboardMonitorFactory.create(listener)
- * monitor.start()
- * ```
- *
- * **Manual Initialization (Optional):**
- *
- * If you need to initialize manually or aren't using AndroidX Startup:
- *
+ * **Manual Initialization (if AndroidX Startup is disabled):**
  * ```kotlin
  * class MyApplication : Application() {
  *     override fun onCreate() {
@@ -57,32 +65,29 @@ import androidx.annotation.RestrictTo
  * ```
  *
  * **Implementation Details:**
- * - Uses `ClipboardManager.OnPrimaryClipChangedListener` for efficient change detection
- * - Automatically debounces rapid clipboard changes (default: 50ms)
- * - All callbacks are delivered on the Android main thread (UI thread)
+ * - Uses OnPrimaryClipChangedListener for change notifications
+ * - Callbacks delivered on the Android main thread
  * - Supports text, HTML, URIs, and image detection
- * - RTF format is not supported on Android (always null)
+ * - RTF format not supported on Android
  *
  * @see AndroidClipboardMonitor
- * @see ClipboardMonitor
  * @since 1.0.0
  */
 public actual object ClipboardMonitorFactory {
     @Volatile
     private var appContext: Context? = null
 
+    internal actual val registry: PlatformRegistry = PlatformRegistry()
+
     /**
      * Initializes the factory with the application context.
      *
-     * **Note:** This method is called automatically by [ClipboardInitializer]
-     * when using AndroidX Startup. Manual initialization is only needed if
-     * you've disabled automatic initialization.
+     * Called automatically by ClipboardInitializer when using AndroidX Startup.
+     * Manual initialization only needed if you've disabled automatic initialization.
      *
-     * This method is idempotent; calling it multiple times is safe.
+     * Safe to call multiple times.
      *
-     * @param context Any context (will be converted to application context internally)
-     *
-     * @see ClipboardInitializer
+     * @param context Any context (automatically converted to application context)
      */
     @JvmStatic
     public fun init(context: Context) {
@@ -90,15 +95,14 @@ public actual object ClipboardMonitorFactory {
             synchronized(this) {
                 if (appContext == null) {
                     appContext = context.applicationContext
+                    registry.register(AndroidStrategy(appContext!!))
                 }
             }
         }
     }
 
     /**
-     * Internal getter for application context.
-     *
-     * @hide
+     * Returns the application context.
      */
     @get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     internal val context: Context
@@ -126,49 +130,58 @@ public actual object ClipboardMonitorFactory {
     /**
      * Checks if the factory has been initialized.
      *
-     * @return true if [init] has been called, false otherwise
+     * @return true if [init] has been called
      */
     @JvmStatic
     public fun isInitialized(): Boolean = appContext != null
 
     /**
-     * Creates a new [AndroidClipboardMonitor] instance.
+     * Creates a clipboard monitor with the specified configuration.
      *
-     * The monitor uses the Android `ClipboardManager` to track clipboard changes
-     * and delivers callbacks on the main thread.
+     * The monitor uses Android's ClipboardManager and delivers callbacks
+     * on the main thread.
      *
-     * **Usage Example:**
+     * Example:
      * ```kotlin
-     * val listener = object : ClipboardListener {
-     *     override fun onClipboardChange(content: ClipboardContent) {
-     *         // Called on main thread
-     *         Log.d("Clipboard", "Text: ${content.text}")
-     *     }
-     * }
-     *
-     * val monitor = ClipboardMonitorFactory.create(listener)
+     * val config = ClipboardConfig(
+     *     listener = myListener,
+     *     debounceDelayMs = 100
+     * )
+     * val monitor = ClipboardMonitorFactory.create(config)
      * monitor.start()
      * ```
      *
-     * @param listener The listener that will receive clipboard change notifications
-     *                 on the Android main thread.
-     *
-     * @return A new [AndroidClipboardMonitor] instance in a stopped state.
-     *
+     * @param config The configuration for the monitor
+     * @return A new Android clipboard monitor
      * @throws IllegalStateException if the factory has not been initialized
-     *
-     * @see AndroidClipboardMonitor
-     * @see init
      */
-    public actual fun create(listener: ClipboardListener): ClipboardMonitor = AndroidClipboardMonitor(context, listener)
+    public actual fun create(config: ClipboardConfig): ClipboardMonitor {
+        val strategy = registry.selectStrategy()
+            ?: throw UnsupportedOperationException(
+                "No applicable clipboard strategy found for Android platform. " +
+                    "Ensure ClipboardMonitorFactory.init() has been called.",
+            )
+
+        return strategy.createMonitor(config)
+    }
 
     /**
-     * Resets the factory (for testing purposes).
+     * Creates a clipboard monitor with default configuration.
      *
-     * @hide
+     * @param listener The listener to receive clipboard change notifications
+     * @return A new Android clipboard monitor with default settings
+     * @throws IllegalStateException if the factory has not been initialized
+     */
+    public actual fun create(listener: ClipboardListener): ClipboardMonitor {
+        return create(ClipboardConfig.default(listener))
+    }
+
+    /**
+     * Resets the factory (for testing).
      */
     @RestrictTo(RestrictTo.Scope.TESTS)
     internal fun reset() {
         appContext = null
+        registry.clear()
     }
 }

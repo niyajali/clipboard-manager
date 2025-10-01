@@ -1,27 +1,6 @@
 name: API Dump
 
 on:
-  # Trigger on pushes to main and develop branches
-  push:
-    branches:
-      - main
-      - master
-    paths:
-      - 'src/**/*.kt'
-      - 'build.gradle.kts'
-      - 'gradle/libs.versions.toml'
-  
-  # Trigger on pull requests
-  pull_request:
-    branches:
-      - main
-      - master
-    paths:
-      - 'src/**/*.kt'
-      - 'build.gradle.kts'
-      - 'gradle/libs.versions.toml'
-  
-  # Allow manual trigger
   workflow_dispatch:
 
 env:
