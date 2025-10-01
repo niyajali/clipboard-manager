@@ -1,0 +1,123 @@
+public final class com/niyajali/clipboard/manager/ClipboardContent {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZJ)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Z
+	public final fun component6 ()J
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZJ)Lcom/niyajali/clipboard/manager/ClipboardContent;
+	public static synthetic fun copy$default (Lcom/niyajali/clipboard/manager/ClipboardContent;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ZJILjava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardContent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFiles ()Ljava/util/List;
+	public final fun getHtml ()Ljava/lang/String;
+	public final fun getImageAvailable ()Z
+	public final fun getRtf ()Ljava/lang/String;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getTimestamp ()J
+	public fun hashCode ()I
+	public final fun isEmpty ()Z
+	public final fun isNotEmpty ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/niyajali/clipboard/manager/ClipboardListener {
+	public abstract fun onClipboardChange (Lcom/niyajali/clipboard/manager/ClipboardContent;)V
+}
+
+public abstract interface class com/niyajali/clipboard/manager/ClipboardMonitor {
+	public abstract fun getCurrentContent ()Lcom/niyajali/clipboard/manager/ClipboardContent;
+	public abstract fun isRunning ()Z
+	public abstract fun start ()V
+	public abstract fun stop ()V
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardMonitorExtensionsKt {
+	public static final fun asFlow (Lcom/niyajali/clipboard/manager/ClipboardMonitor;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun filesFlow (Lcom/niyajali/clipboard/manager/ClipboardMonitor;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun imageAvailableFlow (Lcom/niyajali/clipboard/manager/ClipboardMonitor;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun textFlow (Lcom/niyajali/clipboard/manager/ClipboardMonitor;Z)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun textFlow$default (Lcom/niyajali/clipboard/manager/ClipboardMonitor;ZILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardMonitorFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/niyajali/clipboard/manager/ClipboardMonitorFactory;
+	public final fun create (Lcom/niyajali/clipboard/manager/ClipboardListener;)Lcom/niyajali/clipboard/manager/ClipboardMonitor;
+}
+
+public abstract interface class com/niyajali/clipboard/manager/ClipboardResult {
+	public static final field Companion Lcom/niyajali/clipboard/manager/ClipboardResult$Companion;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardResult$Companion {
+	public final fun from (Ljava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+	public final fun ofNullable (Ljava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardResult$Empty : com/niyajali/clipboard/manager/ClipboardResult {
+	public static final field $stable I
+	public static final field INSTANCE Lcom/niyajali/clipboard/manager/ClipboardResult$Empty;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardResult$Error : com/niyajali/clipboard/manager/ClipboardResult {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Throwable;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Throwable;)Lcom/niyajali/clipboard/manager/ClipboardResult$Error;
+	public static synthetic fun copy$default (Lcom/niyajali/clipboard/manager/ClipboardResult$Error;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardResult$Error;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ljava/lang/Throwable;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardResult$PermissionDenied : com/niyajali/clipboard/manager/ClipboardResult {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/niyajali/clipboard/manager/ClipboardResult$PermissionDenied;
+	public static synthetic fun copy$default (Lcom/niyajali/clipboard/manager/ClipboardResult$PermissionDenied;Ljava/lang/String;ILjava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardResult$PermissionDenied;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardResult$Success : com/niyajali/clipboard/manager/ClipboardResult {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardResult$Success;
+	public static synthetic fun copy$default (Lcom/niyajali/clipboard/manager/ClipboardResult$Success;Ljava/lang/Object;ILjava/lang/Object;)Lcom/niyajali/clipboard/manager/ClipboardResult$Success;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/niyajali/clipboard/manager/ClipboardResultKt {
+	public static final fun flatMap (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+	public static final fun getOrDefault (Lcom/niyajali/clipboard/manager/ClipboardResult;Ljava/lang/Object;)Ljava/lang/Object;
+	public static final fun getOrNull (Lcom/niyajali/clipboard/manager/ClipboardResult;)Ljava/lang/Object;
+	public static final fun getOrThrow (Lcom/niyajali/clipboard/manager/ClipboardResult;)Ljava/lang/Object;
+	public static final fun isEmpty (Lcom/niyajali/clipboard/manager/ClipboardResult;)Z
+	public static final fun isFailure (Lcom/niyajali/clipboard/manager/ClipboardResult;)Z
+	public static final fun isSuccess (Lcom/niyajali/clipboard/manager/ClipboardResult;)Z
+	public static final fun map (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+	public static final fun onEmpty (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function0;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+	public static final fun onError (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function2;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+	public static final fun onPermissionDenied (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+	public static final fun onSuccess (Lcom/niyajali/clipboard/manager/ClipboardResult;Lkotlin/jvm/functions/Function1;)Lcom/niyajali/clipboard/manager/ClipboardResult;
+}
+
