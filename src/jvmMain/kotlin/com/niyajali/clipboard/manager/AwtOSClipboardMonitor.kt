@@ -21,11 +21,11 @@
  */
 package com.niyajali.clipboard.manager
 
+import com.niyajali.clipboard.manager.internal.sha1
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
-import java.security.MessageDigest
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -192,19 +192,5 @@ internal class AwtOSClipboardMonitor(
 
         // Cheap stable digest
         return sha1(sb.toString())
-    }
-
-    private fun sha1(s: String): String {
-        val md = MessageDigest.getInstance("SHA-1")
-        val bytes = md.digest(s.toByteArray(Charsets.UTF_8))
-        val hex = CharArray(bytes.size * 2)
-        val hexChars = "0123456789abcdef".toCharArray()
-        var i = 0
-        for (b in bytes) {
-            val v = b.toInt() and 0xFF
-            hex[i++] = hexChars[v ushr 4]
-            hex[i++] = hexChars[v and 0x0F]
-        }
-        return String(hex)
     }
 }

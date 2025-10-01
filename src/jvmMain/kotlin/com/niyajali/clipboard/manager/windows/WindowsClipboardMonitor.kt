@@ -24,6 +24,7 @@ package com.niyajali.clipboard.manager.windows
 import com.niyajali.clipboard.manager.ClipboardContent
 import com.niyajali.clipboard.manager.ClipboardListener
 import com.niyajali.clipboard.manager.ClipboardMonitor
+import com.niyajali.clipboard.manager.internal.sha1
 import com.sun.jna.Pointer
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.User32
@@ -40,7 +41,6 @@ import com.sun.jna.platform.win32.WinUser.WindowProc
 import com.sun.jna.ptr.PointerByReference
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
-import java.security.MessageDigest
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -132,31 +132,36 @@ internal class WindowsClipboardMonitor(
         val code = Kernel32.INSTANCE.GetLastError()
         if (code == 0) return "$prefix (GetLastError=0)"
 
-        val flags = WinBase.FORMAT_MESSAGE_FROM_SYSTEM or
-            WinBase.FORMAT_MESSAGE_IGNORE_INSERTS or
-            WinBase.FORMAT_MESSAGE_ALLOCATE_BUFFER
+        return runCatching {
+            val flags = WinBase.FORMAT_MESSAGE_FROM_SYSTEM or
+                WinBase.FORMAT_MESSAGE_IGNORE_INSERTS or
+                WinBase.FORMAT_MESSAGE_ALLOCATE_BUFFER
 
-        val out = PointerByReference()
-        val len = Kernel32.INSTANCE.FormatMessage(
-            flags,
-            null,
-            code,
-            0,
-            out,
-            0,
-            null,
-        )
-        if (len == 0) {
-            return "$prefix (error $code: <failed to format message>)"
-        }
+            val out = PointerByReference()
+            val len = Kernel32.INSTANCE.FormatMessage(
+                flags,
+                null,
+                code,
+                0,
+                out,
+                0,
+                null,
+            )
+            
+            if (len == 0) {
+                return "$prefix (error $code: <failed to format message>)"
+            }
 
-        val ptr: Pointer = out.value
-        val msg = try {
-            ptr.getWideString(0).trim()
-        } finally {
-            Kernel32.INSTANCE.LocalFree(ptr)
+            val ptr: Pointer = out.value
+            try {
+                val msg = ptr.getWideString(0).trim()
+                "$prefix (error $code: $msg)"
+            } finally {
+                Kernel32.INSTANCE.LocalFree(ptr)
+            }
+        }.getOrElse {
+            "$prefix (error $code: <failed to format message>)"
         }
-        return "$prefix (error $code: $msg)"
     }
 
     private fun createMessageWindow() {
@@ -345,22 +350,5 @@ internal class WindowsClipboardMonitor(
         }
 
         return sha1(sb.toString())
-    }
-
-    /**
-     * Computes SHA-1 hash of a string.
-     */
-    private fun sha1(input: String): String {
-        val md = MessageDigest.getInstance("SHA-1")
-        val bytes = md.digest(input.toByteArray(Charsets.UTF_8))
-        val hex = CharArray(bytes.size * 2)
-        val hexChars = "0123456789abcdef".toCharArray()
-        var index = 0
-        for (byte in bytes) {
-            val value = byte.toInt() and 0xFF
-            hex[index++] = hexChars[value ushr 4]
-            hex[index++] = hexChars[value and 0x0F]
-        }
-        return String(hex)
     }
 }

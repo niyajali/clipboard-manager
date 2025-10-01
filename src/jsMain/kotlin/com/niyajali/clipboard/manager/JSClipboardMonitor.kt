@@ -21,10 +21,13 @@
  */
 package com.niyajali.clipboard.manager
 
+import com.niyajali.clipboard.manager.internal.sha1
 import kotlinx.browser.window
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.await
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.js.Promise
 
@@ -73,7 +76,6 @@ import kotlin.js.Promise
  * @see <a href="https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API">MDN Clipboard API</a>
  * @since 1.0.0
  */
-@OptIn(DelicateCoroutinesApi::class)
 internal class JSClipboardMonitor(
     private val listener: ClipboardListener,
     private val pollingIntervalMs: Int = 500,
@@ -85,12 +87,16 @@ internal class JSClipboardMonitor(
     private var intervalId: Int? = null
     private var lastHash: String? = null
     private val clipboard = window.navigator.asDynamic().clipboard
+    
+    // Use a custom scope with SupervisorJob for proper lifecycle management
+    private val clipboardScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     /**
      * Starts monitoring the clipboard using polling.
      *
      * Sets up a periodic timer that checks the clipboard content and notifies
-     * the listener when changes are detected.
+     * the listener when changes are detected. Uses structured concurrency
+     * with a dedicated coroutine scope.
      *
      * **Permission Prompt:** The browser may prompt the user for clipboard
      * read permission when this method is called or during the first poll.
@@ -113,7 +119,7 @@ internal class JSClipboardMonitor(
     /**
      * Stops monitoring the clipboard and releases resources.
      *
-     * Cancels the polling timer.
+     * Cancels the polling timer and all running coroutines.
      */
     override fun stop() {
         if (!running) return
@@ -122,6 +128,9 @@ internal class JSClipboardMonitor(
         intervalId?.let { window.clearInterval(it) }
         intervalId = null
         lastHash = null
+        
+        // Cancel all coroutines in the scope
+        clipboardScope.cancel()
     }
 
     /**
@@ -169,7 +178,7 @@ internal class JSClipboardMonitor(
             return
         }
 
-        GlobalScope.launch {
+        clipboardScope.launch {
             try {
                 val content = readClipboardAsync()
                 
@@ -220,6 +229,6 @@ internal class JSClipboardMonitor(
      */
     private fun hashContent(content: ClipboardContent): String {
         val text = content.text ?: ""
-        return "${text.length}-${text.take(64).hashCode()}"
+        return sha1("${text.length}-${text.take(64)}")
     }
 }

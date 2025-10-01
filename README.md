@@ -22,7 +22,7 @@ Add the dependency to your project:
 
 ```kotlin
 dependencies {
-    implementation("io.github.niyajali:clipboard-manager:2.0.0")
+    implementation("io.github.niyajali:clipboard-manager:1.0.0")
 }
 ```
 
@@ -563,26 +563,6 @@ val monitor = ClipboardMonitor.Builder()
     .build()
 ```
 
-## Architecture
-
-The library follows modern SOLID principles with Builder + Strategy Pattern:
-
-- **Builder Pattern** - Fluent API for configuration (`ClipboardMonitorBuilder`)
-- **Strategy Pattern** - Platform-specific implementations (`PlatformStrategy`)
-- **Facade Pattern** - Simplified factory interface (`ClipboardMonitorFactory`)
-- **Registry Pattern** - Strategy management (`PlatformRegistry`)
-
-**Design Principles:**
-
-- ✅ Single Responsibility - Each class has one clear purpose
-- ✅ Open/Closed - Extensible without modifying core code
-- ✅ Liskov Substitution - All strategies are interchangeable
-- ✅ Interface Segregation - Minimal, focused interfaces
-- ✅ Dependency Inversion - Depend on abstractions
-
-Common interfaces defined in `commonMain`, platform-specific implementations in respective source
-sets.
-
 ## Dependency Injection
 
 ### Koin
@@ -616,48 +596,6 @@ object ClipboardModule {
     }
 }
 ```
-
-## Migration from v1.x
-
-Version 2.0 is fully backward compatible. Existing code works without changes:
-
-```kotlin
-// v1.x API (still works)
-val monitor = ClipboardMonitorFactory.create(listener)
-
-// v2.x API (recommended)
-val monitor = ClipboardMonitor.Builder()
-    .setListener(listener)
-    .build()
-```
-
-New configuration options are available through the Builder API.
-
-## Dependencies
-
-### Common
-
-- Kotlin Stdlib
-- Kotlinx Coroutines Core
-- Kotlinx DateTime
-
-### Android
-
-- AndroidX Startup Runtime
-
-### JVM
-
-- JNA (Java Native Access)
-- JNA Platform
-
-### iOS
-
-- Foundation Framework
-- UIKit Framework
-
-### JavaScript
-
-- Browser Clipboard API
 
 ## License
 

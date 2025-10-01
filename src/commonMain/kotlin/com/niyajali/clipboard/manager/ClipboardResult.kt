@@ -38,7 +38,7 @@ package com.niyajali.clipboard.manager
  * ```
  *
  * @param T The type of data returned on success
- * @see ClipboardManager
+ * @see ClipboardResult
  * @since 1.0.0
  */
 public sealed interface ClipboardResult<out T> {

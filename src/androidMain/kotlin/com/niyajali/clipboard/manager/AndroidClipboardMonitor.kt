@@ -28,7 +28,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import java.security.MessageDigest
+import com.niyajali.clipboard.manager.internal.sha1
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -312,25 +312,5 @@ internal class AndroidClipboardMonitor(
         }
 
         return sha1(sb.toString())
-    }
-
-    /**
-     * Computes SHA-1 hash of a string.
-     *
-     * @param input The string to hash
-     * @return Hexadecimal representation of the SHA-1 hash
-     */
-    private fun sha1(input: String): String {
-        val md = MessageDigest.getInstance("SHA-1")
-        val bytes = md.digest(input.toByteArray(Charsets.UTF_8))
-        val hex = CharArray(bytes.size * 2)
-        val hexChars = "0123456789abcdef".toCharArray()
-        var index = 0
-        for (byte in bytes) {
-            val value = byte.toInt() and 0xFF
-            hex[index++] = hexChars[value ushr 4]
-            hex[index++] = hexChars[value and 0x0F]
-        }
-        return String(hex)
     }
 }

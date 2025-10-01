@@ -30,7 +30,6 @@ import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
 import platform.Foundation.timeIntervalSince1970
 import platform.UIKit.UIPasteboard
-import kotlin.concurrent.AtomicReference
 
 /**
  * iOS implementation of [ClipboardMonitor] using UIPasteboard.
@@ -52,8 +51,15 @@ import kotlin.concurrent.AtomicReference
  * - No explicit permission required, but user is notified
  *
  * **Threading:**
- * - All callbacks are delivered on the main thread
+ * - All callbacks are delivered on the main thread via NSTimer
  * - Safe to update UI directly from the callback
+ * - iOS uses single-threaded main run loop, so no complex synchronization needed
+ *
+ * **Note on Beta API Usage:**
+ * This implementation uses Kotlin/Native's `@BetaInteropApi` for Foundation framework
+ * interoperability. This API is stable in practice but marked as beta by JetBrains.
+ * The usage here is limited to standard Foundation types (NSString, NSDate) and should
+ * remain compatible across Kotlin versions.
  *
  * @param listener The listener to receive clipboard change notifications
  * @param pollingIntervalMs Polling interval in seconds (default: 0.5 seconds)
@@ -70,14 +76,15 @@ internal class IOSClipboardMonitor(
     private val errorHandler: ((Throwable) -> Unit)? = null,
 ) : ClipboardMonitor {
 
-    private val running = AtomicReference(false)
+    // iOS runs on main thread, no need for AtomicReference
+    private var running = false
     private var timer: NSTimer? = null
     private var lastChangeCount: Long = 0
     private val pasteboard = UIPasteboard.generalPasteboard
 
     override fun start() {
-        if (running.value) return
-        running.value = true
+        if (running) return
+        running = true
 
         lastChangeCount = pasteboard.changeCount
 
@@ -94,15 +101,15 @@ internal class IOSClipboardMonitor(
     }
 
     override fun stop() {
-        if (!running.value) return
-        running.value = false
+        if (!running) return
+        running = false
 
         timer?.invalidate()
         timer = null
         lastChangeCount = 0
     }
 
-    override fun isRunning(): Boolean = running.value
+    override fun isRunning(): Boolean = running
 
     override fun getCurrentContent(): ClipboardContent = readPasteboard()
 
@@ -129,6 +136,13 @@ internal class IOSClipboardMonitor(
         }
     }
 
+    /**
+     * Reads the current pasteboard content.
+     *
+     * Note: Uses [@BetaInteropApi] for NSString creation from NSData. This is a stable
+     * usage pattern that has been supported since early Kotlin/Native versions and is
+     * unlikely to change in future releases.
+     */
     @OptIn(BetaInteropApi::class)
     private fun readPasteboard(): ClipboardContent {
         val timestamp = NSDate().timeIntervalSince1970.toLong() * 1000
