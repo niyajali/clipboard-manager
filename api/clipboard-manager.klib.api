@@ -1,5 +1,6 @@
 // Klib ABI Dump
 // Targets: [iosArm64, iosSimulatorArm64, iosX64, js, wasmJs]
+// Alias: ios => [iosArm64, iosSimulatorArm64, iosX64]
 // Rendering settings:
 // - Signature version: 2
 // - Show manifest properties: true
@@ -147,6 +148,12 @@ final inline fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResu
 final inline fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/onError(kotlin/Function2<kotlin/String, kotlin/Throwable?, kotlin/Unit>): com.niyajali.clipboard.manager/ClipboardResult<#A> // com.niyajali.clipboard.manager/onError|onError@com.niyajali.clipboard.manager.ClipboardResult<0:0>(kotlin.Function2<kotlin.String,kotlin.Throwable?,kotlin.Unit>){0§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/onPermissionDenied(kotlin/Function1<kotlin/String?, kotlin/Unit>): com.niyajali.clipboard.manager/ClipboardResult<#A> // com.niyajali.clipboard.manager/onPermissionDenied|onPermissionDenied@com.niyajali.clipboard.manager.ClipboardResult<0:0>(kotlin.Function1<kotlin.String?,kotlin.Unit>){0§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?> (com.niyajali.clipboard.manager/ClipboardResult<#A>).com.niyajali.clipboard.manager/onSuccess(kotlin/Function1<#A, kotlin/Unit>): com.niyajali.clipboard.manager/ClipboardResult<#A> // com.niyajali.clipboard.manager/onSuccess|onSuccess@com.niyajali.clipboard.manager.ClipboardResult<0:0>(kotlin.Function1<0:0,kotlin.Unit>){0§<kotlin.Any?>}[0]
+
+// Targets: [ios]
+final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop|#static{}com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop[0]
+
+// Targets: [ios]
+final fun com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter(): kotlin/Int // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter|com_niyajali_clipboard_manager_IOSClipboardMonitor$stableprop_getter(){}[0]
 
 // Targets: [js]
 final val com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop // com.niyajali.clipboard.manager/com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop|#static{}com_niyajali_clipboard_manager_JSClipboardMonitor$stableprop[0]
